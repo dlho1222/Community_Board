@@ -4,7 +4,7 @@ POST http://localhost:8080/api/users/register
 Content-Type: application/json
 
 {
-  "username": "test_user_intelliJj",
-  "password": "password1233",
-  "email": "test_intellij@examplee.com"
+  "username": "test_user1",
+  "password": "12341234",
+  "email": "test_user11@example.com"
 }

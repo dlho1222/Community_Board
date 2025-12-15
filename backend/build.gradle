@@ -29,8 +29,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     //JPA + Hibernate 기반 ORM/ DB 테이블 - Java Entity 자동 매핑 / CRUD 코드 최소화
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    //인증&인가 /로그인,권한 관리 /보안 필터 체인 자동 구성
-    implementation 'org.springframework.boot:spring-boot-starter-security'
+
     //입력값 검증, 잘못된 요청 미리 차단
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     runtimeOnly 'com.mysql:mysql-connector-j'
