@@ -1,35 +1,40 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import UserProfilePage from './pages/UserProfilePage';
+import BoardListPage from './pages/BoardListPage';
+import BoardDetailPage from './pages/BoardDetailPage';
+import BoardWritePage from './pages/BoardWritePage';
+import AdminUserManagementPage from './pages/AdminUserManagementPage';
+import AdminPostManagementPage from './pages/AdminPostManagementPage';
+
+import './App.css'; // Keep existing CSS
+import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <Router>
+      <Header />
+      <main style={{ minHeight: '80vh' }}> {/* Added for content area */}
+        <Routes>
+          <Route path="/" element={<BoardListPage />} /> {/* Home page as Board List */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/profile" element={<UserProfilePage />} />
+          <Route path="/board" element={<BoardListPage />} />
+          <Route path="/board/:id" element={<BoardDetailPage />} />
+          <Route path="/board/write" element={<BoardWritePage />} />
+          <Route path="/board/edit/:id" element={<BoardWritePage />} />
+          <Route path="/admin/users" element={<AdminUserManagementPage />} />
+          <Route path="/admin/posts" element={<AdminPostManagementPage />} />
+        </Routes>
+      </main>
+      <Footer />
+    </Router>
+  );
 }
 
-export default App
+export default App;
