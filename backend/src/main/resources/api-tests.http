@@ -1,0 +1,10 @@
+//API TEST CODE
+### Register User
+POST http://localhost:8080/api/users/register
+Content-Type: application/json
+
+{
+  "username": "test_user_intelliJ",
+  "password": "password123",
+  "email": "test_intellij@example.com"
+}
