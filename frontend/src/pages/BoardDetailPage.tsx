@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Container, Card, Button, Alert, Spinner } from 'react-bootstrap';
+import { Container, Card, Button, Alert, Spinner, ListGroup, Form } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
 import postApi from '../api/postApi';
 import type { PostResponse } from '../api/postApi'; // Explicitly import type only
+import commentApi from '../api/commentApi';
+import type { CommentResponse } from '../api/commentApi';
 import { AuthContext } from '../context/AuthContext'; // Import AuthContext
 
 const BoardDetailPage: React.FC = () => {
@@ -11,6 +13,8 @@ const BoardDetailPage: React.FC = () => {
   const authContext = useContext(AuthContext);
 
   const [post, setPost] = useState<PostResponse | null>(null);
+  const [comments, setComments] = useState<CommentResponse[]>([]);
+  const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +28,7 @@ const BoardDetailPage: React.FC = () => {
   const isAdmin = user && user.username === 'admin'; // Simple admin check for now
 
   useEffect(() => {
-    const fetchPost = async () => {
+    const fetchPostAndComments = async () => {
       if (!id) {
         setError('Post ID is missing.');
         setLoading(false);
@@ -32,24 +36,26 @@ const BoardDetailPage: React.FC = () => {
       }
       try {
         setLoading(true);
-        const data = await postApi.getPostById(parseInt(id));
-        setPost(data);
+        const postData = await postApi.getPostById(parseInt(id));
+        setPost(postData);
+        const commentsData = await commentApi.getCommentsByPostId(parseInt(id));
+        setComments(commentsData);
       } catch (err: any) {
-        console.error('Failed to fetch post:', err);
+        console.error('Failed to fetch post or comments:', err);
         if (err.response && err.response.data && err.response.data.message) {
             setError(err.response.data.message);
         } else if (err.response && err.response.data) {
             setError(err.response.data);
         }
         else {
-            setError('Failed to load post. Please try again later.');
+            setError('Failed to load post or comments. Please try again later.');
         }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPost();
+    fetchPostAndComments();
   }, [id]);
 
   // Debugging logs for isAuthor
@@ -67,6 +73,39 @@ const BoardDetailPage: React.FC = () => {
       console.log('--------------------------');
     }
   }, [user, post, isAuthor, isAdmin]);
+
+  const handleCommentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!user || !post || !newComment.trim()) {
+      return;
+    }
+
+    try {
+      const newCommentData = await commentApi.createComment({
+        content: newComment,
+        userId: user.id,
+        postId: post.id,
+      });
+      setComments([...comments, newCommentData]);
+      setNewComment('');
+    } catch (err) {
+      console.error('Failed to create comment:', err);
+      setError('Failed to post comment. Please try again.');
+    }
+  };
+
+  const handleCommentDelete = async (commentId: number) => {
+    if (!window.confirm('Are you sure you want to delete this comment?')) {
+      return;
+    }
+    try {
+      await commentApi.deleteComment(commentId);
+      setComments(comments.filter((comment) => comment.id !== commentId));
+    } catch (err) {
+      console.error('Failed to delete comment:', err);
+      setError('Failed to delete comment. Please try again.');
+    }
+  };
 
   const handleDelete = async () => {
     if (!post || !window.confirm('Are you sure you want to delete this post?')) {
@@ -138,8 +177,45 @@ const BoardDetailPage: React.FC = () => {
 
           <hr />
 
-          {/* Comments and File Attachments are separate features, removed for now */}
-          <Alert variant="info">댓글 및 파일 첨부 기능은 아직 구현되지 않았습니다.</Alert>
+          {/* Comments Section */}
+          <div className="mt-4">
+            <h5>댓글</h5>
+            <ListGroup>
+              {comments.map((comment) => (
+                <ListGroup.Item key={comment.id} className="d-flex justify-content-between align-items-start">
+                  <div>
+                    <strong>{comment.authorName}</strong>
+                    <p className="mb-1">{comment.content}</p>
+                    <small className="text-muted">{new Date(comment.createdAt).toLocaleString()}</small>
+                  </div>
+                  {(user?.id === comment.userId || isAdmin) && (
+                    <Button variant="danger" size="sm" onClick={() => handleCommentDelete(comment.id)}>
+                      Delete
+                    </Button>
+                  )}
+                </ListGroup.Item>
+              ))}
+            </ListGroup>
+
+            {/* New Comment Form */}
+            {user && (!post.secret || isAuthor || isAdmin) && (
+              <Form className="mt-4" onSubmit={handleCommentSubmit}>
+                <Form.Group className="mb-3">
+                  <Form.Label>댓글 작성</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    rows={3}
+                    placeholder="댓글을 입력하세요."
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                  />
+                </Form.Group>
+                <Button variant="primary" type="submit">
+                  등록
+                </Button>
+              </Form>
+            )}
+          </div>
           
           <Button variant="primary" onClick={() => navigate('/board')} disabled={loading}>
             목록으로
