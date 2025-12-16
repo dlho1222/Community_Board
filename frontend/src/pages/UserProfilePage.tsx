@@ -78,8 +78,21 @@ const UserProfilePage: React.FC = () => {
             setPassword(''); // Clear password field after submission
             setConfirmPassword(''); // Clear confirm password field
         } catch (err: any) {
-            if (err.response) {
-                setError(err.response.data);
+            if (err.response && err.response.data) {
+                // Backend validation errors often come as an object
+                if (typeof err.response.data === 'string') {
+                    setError(err.response.data);
+                } else if (err.response.data.message) {
+                    setError(err.response.data.message);
+                } else if (err.response.data.errors && Array.isArray(err.response.data.errors)) {
+                    // Assuming Spring Validation errors array
+                    const validationErrors = err.response.data.errors.map((e: any) => e.defaultMessage || e.message).join(', ');
+                    setError(validationErrors || 'Validation error occurred.');
+                } else if (err.response.data.error) {
+                    setError(err.response.data.error);
+                } else {
+                    setError('An unknown error occurred on the server.');
+                }
             } else if (err.request) {
                 setError('No response from server. Please try again later.');
             } else {
