@@ -51,4 +51,22 @@ public class UserServiceImpl implements UserService {
 
         return user;
     }
+
+    @Override
+    public User update(Long id, UserUpdateRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // 사용자 이름 변경 시 중복 확인
+        if (!user.getUsername().equals(request.getUsername())) {
+            userRepository.findByUsername(request.getUsername()).ifPresent(u -> {
+                throw new IllegalArgumentException("이미 사용 중인 사용자 이름입니다.");
+            });
+        }
+
+        user.setUsername(request.getUsername());
+        user.setPassword(request.getPassword()); // TODO: 비밀번호 암호화
+
+        return userRepository.save(user);
+    }
 }
