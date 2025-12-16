@@ -171,4 +171,31 @@ public class PostServiceImpl implements PostService {
         String deletePostSql = "DELETE FROM posts WHERE id = ?";
         jdbcTemplate.update(deletePostSql, id);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PostResponse> searchPostsByTitle(String keyword) {
+        String searchSql = "SELECT p.id, p.title, p.content, p.is_secret, p.created_at, p.updated_at, u.id AS user_id, u.username, u.password, u.email FROM posts p JOIN users u ON p.user_id = u.id WHERE p.title LIKE ? ORDER BY p.created_at DESC";
+        String searchPattern = "%" + keyword + "%";
+        List<Post> posts = jdbcTemplate.query(searchSql, this::mapRowToPost, searchPattern);
+
+        return posts.stream()
+                .map(post -> {
+                    if (post.isSecret()) {
+                        return PostResponse.builder()
+                                .id(post.getId())
+                                .title("비밀글입니다.")
+                                .content("")
+                                .authorId(post.getUser().getId())
+                                .authorName(post.getUser().getUsername())
+                                .createdAt(post.getCreatedAt())
+                                .updatedAt(post.getUpdatedAt())
+                                .secret(true)
+                                .build();
+                    } else {
+                        return PostResponse.fromEntity(post);
+                    }
+                })
+                .collect(Collectors.toList());
+    }
 }

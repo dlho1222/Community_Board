@@ -45,6 +45,12 @@ public class PostController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<List<PostResponse>> searchPostsByTitle(@RequestParam String keyword) {
+        List<PostResponse> posts = postService.searchPostsByTitle(keyword);
+        return ResponseEntity.ok(posts);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException e) {
 

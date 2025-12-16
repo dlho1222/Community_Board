@@ -50,6 +50,11 @@ const postApi = {
     deletePost: async (id: number): Promise<void> => {
         await api.delete(`/api/posts/${id}`);
     },
+
+    searchPosts: async (keyword: string): Promise<PostResponse[]> => {
+        const response = await api.get<PostResponse[]>(`/api/posts/search?keyword=${keyword}`);
+        return response.data;
+    },
 };
 
 export default postApi;

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Container, Table, Button, Form, FormControl, InputGroup, Alert, Spinner } from 'react-bootstrap';
 import postApi from '../api/postApi';
 import type { PostResponse } from '../api/postApi'; // Explicitly import type only, if your TypeScript version supports it
-// If the above line still fails, you might need to manually define the interface here or change import style
 
 import { useNavigate } from 'react-router-dom';
 
@@ -11,23 +10,30 @@ const BoardListPage: React.FC = () => {
   const [posts, setPosts] = useState<PostResponse[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>(''); // State for search input
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        setLoading(true);
-        const data = await postApi.getAllPosts();
-        setPosts(data);
-      } catch (err) {
-        console.error('Failed to fetch posts:', err);
-        setError('Failed to load posts. Please try again later.');
-      } finally {
-        setLoading(false);
+  const fetchPosts = async (keyword?: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      let data: PostResponse[];
+      if (keyword && keyword.trim() !== '') {
+        data = await postApi.searchPosts(keyword);
+      } else {
+        data = await postApi.getAllPosts();
       }
-    };
+      setPosts(data);
+    } catch (err) {
+      console.error('Failed to fetch posts:', err);
+      setError('Failed to load posts. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchPosts();
+  useEffect(() => {
+    fetchPosts(); // Initial load of all posts
   }, []);
 
   const handleWritePost = () => {
@@ -36,6 +42,11 @@ const BoardListPage: React.FC = () => {
 
   const handlePostClick = (id: number) => {
     navigate(`/board/${id}`);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchPosts(searchTerm);
   };
 
   if (loading) {
@@ -61,13 +72,17 @@ const BoardListPage: React.FC = () => {
       <h2 className="mb-4">Community Board</h2>
 
       <div className="d-flex justify-content-between mb-3">
-        <InputGroup style={{ width: '300px' }}>
-          <FormControl
-            placeholder="Search posts..."
-            aria-label="Search posts"
-          />
-          <Button variant="outline-secondary">Search</Button>
-        </InputGroup>
+        <Form onSubmit={handleSearch}>
+            <InputGroup style={{ width: '300px' }}>
+              <FormControl
+                placeholder="Search posts by title..."
+                aria-label="Search posts"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <Button variant="outline-secondary" type="submit">Search</Button>
+            </InputGroup>
+        </Form>
         <Button variant="primary" onClick={handleWritePost}>Write Post</Button>
       </div>
 

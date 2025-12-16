@@ -8,4 +8,5 @@ public interface PostService {
     List<PostResponse> getAllPosts();
     PostResponse updatePost(Long id, PostUpdateRequest request);
     void deletePost(Long id);
+    List<PostResponse> searchPostsByTitle(String keyword);
 }
