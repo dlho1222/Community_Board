@@ -1,13 +1,60 @@
-import React from 'react';
-import { Container, Table, Button, Form, FormControl, InputGroup } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Container, Table, Button, Form, FormControl, InputGroup, Alert, Spinner } from 'react-bootstrap';
+import postApi from '../api/postApi';
+import type { PostResponse } from '../api/postApi'; // Explicitly import type only, if your TypeScript version supports it
+// If the above line still fails, you might need to manually define the interface here or change import style
+
+import { useNavigate } from 'react-router-dom';
+
 
 const BoardListPage: React.FC = () => {
-  // Placeholder data
-  const posts = [
-    { id: 1, title: '첫 번째 게시글', author: 'User1', date: '2025-12-14', views: 10 },
-    { id: 2, title: '두 번째 게시글', author: 'User2', date: '2025-12-13', views: 25 },
-    { id: 3, title: '세 번째 게시글', author: 'User1', date: '2025-12-12', views: 5 },
-  ];
+  const [posts, setPosts] = useState<PostResponse[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        const data = await postApi.getAllPosts();
+        setPosts(data);
+      } catch (err) {
+        console.error('Failed to fetch posts:', err);
+        setError('Failed to load posts. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, []);
+
+  const handleWritePost = () => {
+    navigate('/board/write');
+  };
+
+  const handlePostClick = (id: number) => {
+    navigate(`/board/${id}`);
+  };
+
+  if (loading) {
+    return (
+      <Container className="mt-4 text-center">
+        <Spinner animation="border" role="status">
+          <span className="visually-hidden">Loading posts...</span>
+        </Spinner>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container className="mt-4">
+        <Alert variant="danger">{error}</Alert>
+      </Container>
+    );
+  }
 
   return (
     <Container className="mt-4">
@@ -21,7 +68,7 @@ const BoardListPage: React.FC = () => {
           />
           <Button variant="outline-secondary">Search</Button>
         </InputGroup>
-        <Button variant="primary" href="/board/write">Write Post</Button>
+        <Button variant="primary" onClick={handleWritePost}>Write Post</Button>
       </div>
 
       <Table striped bordered hover responsive>
@@ -31,17 +78,20 @@ const BoardListPage: React.FC = () => {
             <th>Title</th>
             <th>Author</th>
             <th>Date</th>
-            <th>Views</th>
+            <th>Secret</th>
           </tr>
         </thead>
         <tbody>
-          {posts.map((post) => (
+          {posts.map((post, index) => (
             <tr key={post.id}>
-              <td>{post.id}</td>
-              <td><a href={`/board/${post.id}`}>{post.title}</a></td>
-              <td>{post.author}</td>
-              <td>{post.date}</td>
-              <td>{post.views}</td>
+              <td>{posts.length - index}</td>
+              <td><a href="#" onClick={(e) => { e.preventDefault(); handlePostClick(post.id); }}>
+                {post.secret ? '비밀글입니다.' : post.title}
+                </a>
+              </td>
+              <td>{post.authorName}</td>
+              <td>{new Date(post.createdAt).toLocaleDateString()}</td>
+              <td>{post.secret ? 'Yes' : 'No'}</td>
             </tr>
           ))}
         </tbody>

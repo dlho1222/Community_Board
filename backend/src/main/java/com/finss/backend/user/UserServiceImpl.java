@@ -72,26 +72,55 @@ public class UserServiceImpl implements UserService {
 
         User user = users.get(0);
 
-        // 사용자 이름 변경 시 중복 확인
-        if (!user.getUsername().equals(request.getUsername())) {
-            String checkUsernameSql = "SELECT COUNT(*) FROM users WHERE username = ? AND id != ?";
-            Integer usernameCount = jdbcTemplate.queryForObject(checkUsernameSql, Integer.class, request.getUsername(), id);
-            if (usernameCount != null && usernameCount > 0) {
-                throw new IllegalArgumentException("이미 사용 중인 사용자 이름입니다.");
+        // Build dynamic UPDATE SQL
+        StringBuilder updateSqlBuilder = new StringBuilder("UPDATE users SET ");
+        List<Object> params = new java.util.ArrayList<>();
+        boolean hasUpdates = false;
+
+        // Update username if provided and different
+        if (request.getUsername() != null && !request.getUsername().trim().isEmpty()) {
+            if (!user.getUsername().equals(request.getUsername())) {
+                // Check for duplicate username
+                String checkUsernameSql = "SELECT COUNT(*) FROM users WHERE username = ? AND id != ?";
+                Integer usernameCount = jdbcTemplate.queryForObject(checkUsernameSql, Integer.class, request.getUsername(), id);
+                if (usernameCount != null && usernameCount > 0) {
+                    throw new IllegalArgumentException("이미 사용 중인 사용자 이름입니다.");
+                }
             }
+            updateSqlBuilder.append("username = ?, ");
+            params.add(request.getUsername());
+            hasUpdates = true;
         }
 
-        // 사용자 정보 업데이트
-        String updateUserSql = "UPDATE users SET username = ?, password = ? WHERE id = ?";
-        jdbcTemplate.update(updateUserSql, request.getUsername(), request.getPassword(), id);
+        // Update password if provided
+        if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
+            // TODO: Add password encryption here
+            updateSqlBuilder.append("password = ?, ");
+            params.add(request.getPassword());
+            hasUpdates = true;
+        }
 
-        // 업데이트된 사용자 객체 반환 (DB에서 다시 조회하는 대신 요청 객체로 새로운 User 객체를 만들어 반환)
-        // 실제로는 DB에서 다시 조회하는 것이 더 정확할 수 있으나, 여기서는 간소화
+        if (!hasUpdates) {
+            throw new IllegalArgumentException("업데이트할 사용자 정보가 제공되지 않았습니다.");
+        }
+
+        // Remove trailing ", " and add WHERE clause
+        updateSqlBuilder.setLength(updateSqlBuilder.length() - 2); // Remove last ", "
+        updateSqlBuilder.append(" WHERE id = ?");
+        params.add(id);
+
+        jdbcTemplate.update(updateSqlBuilder.toString(), params.toArray());
+
+        // Return updated user object (reflecting potential changes)
+        // In a real application, you might re-fetch the user or carefully construct the updated object
+        String updatedUsername = (request.getUsername() != null && !request.getUsername().trim().isEmpty()) ? request.getUsername() : user.getUsername();
+        String updatedPassword = (request.getPassword() != null && !request.getPassword().trim().isEmpty()) ? request.getPassword() : user.getPassword();
+
         return User.builder()
                 .id(id)
-                .username(request.getUsername())
-                .password(request.getPassword()) // TODO: 비밀번호 암호화
-                .email(user.getEmail())
+                .username(updatedUsername)
+                .password(updatedPassword) // Note: password should not be returned in real apps for security
+                .email(user.getEmail()) // Email is not updatable via this request
                 .build();
     }
 }

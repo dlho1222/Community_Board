@@ -50,7 +50,28 @@ const UserProfilePage: React.FC = () => {
         }
 
         try {
-            const response = await api.put(`/api/users/${user.id}`, { username, password });
+            const updatePayload: { username?: string; password?: string } = {};
+
+            if (username.trim() !== '' && username !== user?.username) {
+                updatePayload.username = username;
+            }
+
+            if (password.trim() !== '') {
+                if (password !== confirmPassword) { // Client-side password confirmation
+                    setError('New passwords do not match.');
+                    setLoading(false);
+                    return;
+                }
+                updatePayload.password = password;
+            }
+
+            if (Object.keys(updatePayload).length === 0) {
+                setError('No changes detected for update.');
+                setLoading(false);
+                return;
+            }
+
+            const response = await api.put(`/api/users/${user.id}`, updatePayload);
             const updatedUser = response.data;
             login(updatedUser); // Update context and localStorage
             setSuccess('Profile updated successfully!');
@@ -93,7 +114,7 @@ const UserProfilePage: React.FC = () => {
                                 placeholder="Enter new username"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
-                                required
+                                // Removed 'required' attribute
                             />
                         </Form.Group>
 
@@ -104,7 +125,7 @@ const UserProfilePage: React.FC = () => {
                                 placeholder="Enter new password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                required
+                                // Removed 'required' attribute
                             />
                         </Form.Group>
 
@@ -115,7 +136,7 @@ const UserProfilePage: React.FC = () => {
                                 placeholder="Confirm new password"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
-                                required
+                                // Removed 'required' attribute
                             />
                         </Form.Group>
 

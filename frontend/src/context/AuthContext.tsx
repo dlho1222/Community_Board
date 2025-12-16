@@ -29,13 +29,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Check localStorage for a logged-in user when the app loads
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
-            setUser(JSON.parse(storedUser));
+            try {
+                const parsedUser = JSON.parse(storedUser);
+                setUser(parsedUser);
+                console.log('AuthContext: User loaded from localStorage:', parsedUser);
+                console.log('AuthContext: User ID from localStorage:', parsedUser.id, 'Type:', typeof parsedUser.id);
+            } catch (e) {
+                console.error('AuthContext: Failed to parse user from localStorage', e);
+                localStorage.removeItem('user');
+            }
         }
     }, []);
 
     const login = (userData: User) => {
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
+        console.log('AuthContext: User data set by login function:', userData);
+        console.log('AuthContext: User ID set by login function:', userData.id, 'Type:', typeof userData.id);
     };
 
     const logout = () => {

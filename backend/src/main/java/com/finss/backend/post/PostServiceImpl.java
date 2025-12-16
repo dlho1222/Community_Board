@@ -5,12 +5,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.jdbc.core.PreparedStatementCreator;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.stream.Collectors; // Added missing import
 
 @Service
 @RequiredArgsConstructor
@@ -31,19 +35,31 @@ public class PostServiceImpl implements PostService {
         }
         User user = users.get(0);
 
-        // 2. Insert Post
+        // 2. Insert Post and retrieve generated ID
         String insertPostSql = "INSERT INTO posts (title, content, is_secret, user_id, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())";
-        jdbcTemplate.update(insertPostSql, request.getTitle(), request.getContent(), request.isSecret(), user.getId());
+        KeyHolder keyHolder = new GeneratedKeyHolder();
 
-        return PostResponse.builder()
-                .id(1L) // Dummy ID
-                .title(request.getTitle())
-                .content(request.getContent())
-                .secret(request.isSecret())
-                .authorName(user.getUsername())
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+        jdbcTemplate.update(connection -> {
+            java.sql.PreparedStatement ps = connection.prepareStatement(insertPostSql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, request.getTitle());
+            ps.setString(2, request.getContent());
+            ps.setBoolean(3, request.isSecret());
+            ps.setLong(4, user.getId());
+            return ps;
+        }, keyHolder);
+
+        Long generatedPostId = keyHolder.getKey().longValue();
+
+        // 3. Query the newly created post to get all accurate details including timestamps
+        String findNewlyCreatedPostSql = "SELECT p.id, p.title, p.content, p.is_secret, p.created_at, p.updated_at, u.id AS user_id, u.username, u.password, u.email FROM posts p JOIN users u ON p.user_id = u.id WHERE p.id = ?";
+        List<Post> newPosts = jdbcTemplate.query(findNewlyCreatedPostSql, this::mapRowToPost, generatedPostId);
+
+        if (newPosts.isEmpty()) {
+            throw new IllegalStateException("Newly created post not found. This should not happen.");
+        }
+
+        Post newPost = newPosts.get(0);
+        return PostResponse.fromEntity(newPost);
     }
 
     @Override
@@ -56,6 +72,9 @@ public class PostServiceImpl implements PostService {
         }
 
         Post post = posts.get(0);
+
+        // TODO: [Security] If post.isSecret() is true, check if the current user is the author or an admin.
+        // If not, throw an authorization exception.
 
         return PostResponse.fromEntity(post);
     }
@@ -72,13 +91,13 @@ public class PostServiceImpl implements PostService {
                                 .id(post.getId())
                                 .title("비밀글입니다.")
                                 .content("") // Content is hidden
+                                .authorId(post.getUser().getId()) // Added for frontend auth checks
                                 .authorName(post.getUser().getUsername())
                                 .createdAt(post.getCreatedAt())
                                 .updatedAt(post.getUpdatedAt())
                                 .secret(true)
                                 .build();
                     } else {
-
                         return PostResponse.fromEntity(post);
                     }
                 })

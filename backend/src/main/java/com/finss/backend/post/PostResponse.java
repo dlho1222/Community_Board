@@ -13,6 +13,7 @@ public class PostResponse {
     private Long id;
     private String title;
     private String content;
+    private Long authorId; // Added authorId
     private String authorName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -23,10 +24,11 @@ public class PostResponse {
                 .id(post.getId())
                 .title(post.getTitle())
                 .content(post.getContent())
+                .authorId(post.getUser().getId()) // Populate authorId
                 .authorName(post.getUser().getUsername())
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
-                .secret(post.isSecret()) // Use post.isSecret() for the 'secret' field
+                .secret(post.isSecret())
                 .build();
     }
 }
