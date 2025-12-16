@@ -1,48 +1,48 @@
 package com.finss.backend.user;
 
 import lombok.RequiredArgsConstructor;
-
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-/*
-UserService.java에서 회원가입의 핵심 로직을 처리
- 1. 중복 확인: UserRepository를 사용하여 요청된 username이나 email이 데이터베이스에 이미 존재하는지 확인
-       * 만약 존재한다면, IllegalArgumentException을 발생시켜 중복 가입을 막습니다.
- 2. 사용자 생성: 암호화된 비밀번호와 요청받은 정보를 바탕으로 새로운 User 객체를 생성
- 3. 저장: 완성된 User 객체를 UserRepository의 save 메소드를 통해 데이터베이스에 저장
- */
+
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private final UserRepository userRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     @Override
     public void register(UserRegisterRequest request) {
         // 사용자 이름 중복 확인
-        userRepository.findByUsername(request.getUsername()).ifPresent(user -> {
+        String checkUsernameSql = "SELECT COUNT(*) FROM users WHERE username = ?";
+        Integer usernameCount = jdbcTemplate.queryForObject(checkUsernameSql, Integer.class, request.getUsername());
+        if (usernameCount != null && usernameCount > 0) {
             throw new IllegalArgumentException("이미 사용 중인 사용자 이름입니다.");
-        });
+        }
 
         // 이메일 중복 확인
-        userRepository.findByEmail(request.getEmail()).ifPresent(user -> {
+        String checkEmailSql = "SELECT COUNT(*) FROM users WHERE email = ?";
+        Integer emailCount = jdbcTemplate.queryForObject(checkEmailSql, Integer.class, request.getEmail());
+        if (emailCount != null && emailCount > 0) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
-        });
+        }
 
-        // 사용자 생성 및 비밀번호 암호화
-        User user = User.builder()
-                .username(request.getUsername())
-                .password(request.getPassword())
-                .email(request.getEmail())
-                .build();
-
-        // 사용자 저장
-        userRepository.save(user);
+        // 사용자 저장 (비밀번호는 암호화되지 않은 상태로 저장됨)
+        String insertUserSql = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
+        jdbcTemplate.update(insertUserSql, request.getUsername(), request.getPassword(), request.getEmail());
     }
 
     @Override
     public User login(UserLoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
+        String findUserSql = "SELECT id, username, password, email FROM users WHERE email = ?";
+        List<User> users = jdbcTemplate.query(findUserSql, this::mapRowToUser, request.getEmail());
+
+        if (users.isEmpty()) {
+            throw new IllegalArgumentException("가입되지 않은 이메일입니다.");
+        }
+
+        User user = users.get(0);
 
         // TODO: 비밀번호 암호화 및 비교 로직 추가 필요
         if (!user.getPassword().equals(request.getPassword())) {
@@ -52,21 +52,46 @@ public class UserServiceImpl implements UserService {
         return user;
     }
 
+    private User mapRowToUser(java.sql.ResultSet rs, int rowNum) throws java.sql.SQLException {
+        return User.builder()
+                .id(rs.getLong("id"))
+                .username(rs.getString("username"))
+                .password(rs.getString("password"))
+                .email(rs.getString("email"))
+                .build();
+    }
+
     @Override
     public User update(Long id, UserUpdateRequest request) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        String findUserSql = "SELECT id, username, password, email FROM users WHERE id = ?";
+        List<User> users = jdbcTemplate.query(findUserSql, this::mapRowToUser, id);
+
+        if (users.isEmpty()) {
+            throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
+        }
+
+        User user = users.get(0);
 
         // 사용자 이름 변경 시 중복 확인
         if (!user.getUsername().equals(request.getUsername())) {
-            userRepository.findByUsername(request.getUsername()).ifPresent(u -> {
+            String checkUsernameSql = "SELECT COUNT(*) FROM users WHERE username = ? AND id != ?";
+            Integer usernameCount = jdbcTemplate.queryForObject(checkUsernameSql, Integer.class, request.getUsername(), id);
+            if (usernameCount != null && usernameCount > 0) {
                 throw new IllegalArgumentException("이미 사용 중인 사용자 이름입니다.");
-            });
+            }
         }
 
-        user.setUsername(request.getUsername());
-        user.setPassword(request.getPassword()); // TODO: 비밀번호 암호화
+        // 사용자 정보 업데이트
+        String updateUserSql = "UPDATE users SET username = ?, password = ? WHERE id = ?";
+        jdbcTemplate.update(updateUserSql, request.getUsername(), request.getPassword(), id);
 
-        return userRepository.save(user);
+        // 업데이트된 사용자 객체 반환 (DB에서 다시 조회하는 대신 요청 객체로 새로운 User 객체를 만들어 반환)
+        // 실제로는 DB에서 다시 조회하는 것이 더 정확할 수 있으나, 여기서는 간소화
+        return User.builder()
+                .id(id)
+                .username(request.getUsername())
+                .password(request.getPassword()) // TODO: 비밀번호 암호화
+                .email(user.getEmail())
+                .build();
     }
 }

@@ -2,6 +2,7 @@ package com.finss.backend.post;
 
 import com.finss.backend.user.User;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,6 +16,8 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Table(name = "posts")
 public class Post {
 
@@ -43,7 +46,6 @@ public class Post {
     @Column(name = "is_secret", nullable = false)
     private boolean secret = false; // Mapped to 'is_secret' in DB
 
-    @Builder
     public Post(String title, String content, User user, boolean secret) {
         this.title = title;
         this.content = content;
@@ -51,9 +53,5 @@ public class Post {
         this.secret = secret;
     }
 
-    public void update(String title, String content, boolean secret) {
-        this.title = title;
-        this.content = content;
-        this.secret = secret;
-    }
+
 }

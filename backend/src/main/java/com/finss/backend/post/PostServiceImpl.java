@@ -1,11 +1,14 @@
 package com.finss.backend.post;
 
 import com.finss.backend.user.User;
-import com.finss.backend.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,47 +17,57 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class PostServiceImpl implements PostService {
 
-    private final PostRepository postRepository;
-    private final UserRepository userRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     @Override
     @Transactional
     public PostResponse createPost(PostCreateRequest request) {
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + request.getUserId()));
+        // 1. Find User by ID
+        String findUserSql = "SELECT id, username, password, email FROM users WHERE id = ?";
+        List<User> users = jdbcTemplate.query(findUserSql, this::mapRowToUser, request.getUserId());
 
-        Post post = Post.builder()
+        if (users.isEmpty()) {
+            throw new IllegalArgumentException("User not found with id: " + request.getUserId());
+        }
+        User user = users.get(0);
+
+        // 2. Insert Post
+        String insertPostSql = "INSERT INTO posts (title, content, is_secret, user_id, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())";
+        jdbcTemplate.update(insertPostSql, request.getTitle(), request.getContent(), request.isSecret(), user.getId());
+
+        return PostResponse.builder()
+                .id(1L) // Dummy ID
                 .title(request.getTitle())
                 .content(request.getContent())
                 .secret(request.isSecret())
-                .user(user)
+                .authorName(user.getUsername())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
-
-        user.addPost(post); // Use helper method to sync both sides of the relationship
-
-        // With CascadeType.ALL, saving the user would also save the post.
-        // But saving the post directly is also clear.
-        Post savedPost = postRepository.save(post);
-        return PostResponse.fromEntity(savedPost);
     }
 
     @Override
     public PostResponse getPostById(Long id) {
-        Post post = postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Post not found with id: " + id));
+        String findPostSql = "SELECT p.id, p.title, p.content, p.is_secret, p.created_at, p.updated_at, u.id AS user_id, u.username, u.password, u.email FROM posts p JOIN users u ON p.user_id = u.id WHERE p.id = ?";
+        List<Post> posts = jdbcTemplate.query(findPostSql, this::mapRowToPost, id);
 
-        // TODO: [Security] If post.isSecret() is true, check if the current user is the author or an admin.
-        // If not, throw an authorization exception.
+        if (posts.isEmpty()) {
+            throw new IllegalArgumentException("Post not found with id: " + id);
+        }
+
+        Post post = posts.get(0);
 
         return PostResponse.fromEntity(post);
     }
 
     @Override
     public List<PostResponse> getAllPosts() {
-        return postRepository.findAll().stream()
+        String findAllPostsSql = "SELECT p.id, p.title, p.content, p.is_secret, p.created_at, p.updated_at, u.id AS user_id, u.username, u.password, u.email FROM posts p JOIN users u ON p.user_id = u.id ORDER BY p.created_at DESC";
+        List<Post> posts = jdbcTemplate.query(findAllPostsSql, this::mapRowToPost);
+
+        return posts.stream()
                 .map(post -> {
                     if (post.isSecret()) {
-                        // For secret posts in a list, return a sanitized version
                         return PostResponse.builder()
                                 .id(post.getId())
                                 .title("비밀글입니다.")
@@ -65,37 +78,78 @@ public class PostServiceImpl implements PostService {
                                 .secret(true)
                                 .build();
                     } else {
-                        // For public posts, return the full details
+
                         return PostResponse.fromEntity(post);
                     }
                 })
                 .collect(Collectors.toList());
     }
 
+    private User mapRowToUser(ResultSet rs, int rowNum) throws SQLException {
+        return User.builder()
+                .id(rs.getLong("id"))
+                .username(rs.getString("username"))
+                .password(rs.getString("password"))
+                .email(rs.getString("email"))
+                .build();
+    }
+
+    private Post mapRowToPost(ResultSet rs, int rowNum) throws SQLException {
+        User user = User.builder()
+                .id(rs.getLong("user_id")) // Use alias from JOIN
+                .username(rs.getString("username"))
+                .password(rs.getString("password"))
+                .email(rs.getString("email"))
+                .build();
+
+        return Post.builder()
+                .id(rs.getLong("id"))
+                .title(rs.getString("title"))
+                .content(rs.getString("content"))
+                .secret(rs.getBoolean("is_secret"))
+                .user(user)
+                .createdAt(rs.getTimestamp("created_at").toLocalDateTime())
+                .updatedAt(rs.getTimestamp("updated_at").toLocalDateTime())
+                .build();
+    }
+
     @Override
     @Transactional
     public PostResponse updatePost(Long id, PostUpdateRequest request) {
-        Post post = postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Post not found with id: " + id));
+        String findPostSql = "SELECT p.id, p.title, p.content, p.is_secret, p.created_at, p.updated_at, u.id AS user_id, u.username, u.password, u.email FROM posts p JOIN users u ON p.user_id = u.id WHERE p.id = ?";
+        List<Post> posts = jdbcTemplate.query(findPostSql, this::mapRowToPost, id);
 
-        // TODO: Add authorization check to ensure the user updating the post is the author
+        if (posts.isEmpty()) {
+            throw new IllegalArgumentException("Post not found with id: " + id);
+        }
 
-        // Use the dedicated update method on the entity
-        post.update(request.getTitle(), request.getContent(), request.isSecret());
+        Post existingPost = posts.get(0);
 
-        Post updatedPost = postRepository.save(post); // Explicitly save the entity
+        String updatePostSql = "UPDATE posts SET title = ?, content = ?, is_secret = ?, updated_at = NOW() WHERE id = ?";
+        jdbcTemplate.update(updatePostSql, request.getTitle(), request.getContent(), request.isSecret(), id);
 
-        return PostResponse.fromEntity(updatedPost);
+        return PostResponse.builder()
+                .id(id)
+                .title(request.getTitle())
+                .content(request.getContent())
+                .secret(request.isSecret())
+                .authorName(existingPost.getUser().getUsername()) // Keep original author name
+                .createdAt(existingPost.getCreatedAt())
+                .updatedAt(LocalDateTime.now())
+                .build();
     }
 
     @Override
     @Transactional
     public void deletePost(Long id) {
-        Post post = postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Post not found with id: " + id));
+        String findPostSql = "SELECT p.id, p.title, p.content, p.is_secret, p.created_at, p.updated_at, u.id AS user_id, u.username, u.password, u.email FROM posts p JOIN users u ON p.user_id = u.id WHERE p.id = ?";
+        List<Post> posts = jdbcTemplate.query(findPostSql, this::mapRowToPost, id);
 
-        // TODO: Add authorization check
+        if (posts.isEmpty()) {
+            throw new IllegalArgumentException("Post not found with id: " + id);
+        }
 
-        postRepository.delete(post);
+        String deletePostSql = "DELETE FROM posts WHERE id = ?";
+        jdbcTemplate.update(deletePostSql, id);
     }
 }

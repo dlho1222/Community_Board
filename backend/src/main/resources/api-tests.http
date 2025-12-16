@@ -4,9 +4,9 @@ POST http://localhost:8080/api/users/register
 Content-Type: application/json
 
 {
-  "username": "test_user1",
+  "username": "test_user",
   "password": "12341234",
-  "email": "test_user1@naver.com"
+  "email": "test_user@naver.com"
 }
 
 ### Login User
@@ -14,7 +14,7 @@ POST http://localhost:8080/api/users/login
 Content-Type: application/json
 
 {
-  "email": "test_user1@naver.com",
+  "email": "test@naver.com",
   "password": "12341234"
 }
 
@@ -31,7 +31,7 @@ PUT http://localhost:8080/api/users/1
 Content-Type: application/json
 
 {
-  "username": "new_user",
+  "username": "newuser",
   "password": "password"
 }
 
@@ -41,7 +41,7 @@ POST http://localhost:8080/api/posts
 Content-Type: application/json
 
 {
-  "title": "My First Public Post 2",
+  "title": "My First Public Post2",
   "content": "This is the content of my first public post.",
   "userId": 1,
   "secret": false
@@ -69,7 +69,7 @@ GET http://localhost:8080/api/posts/2
 
 ### Update Post
 # Replace {id} with a valid post ID
-PUT http://localhost:8080/api/posts/3
+PUT http://localhost:8080/api/posts/1
 Content-Type: application/json
 
 {
@@ -80,7 +80,7 @@ Content-Type: application/json
 
 ### Make Post Secret
 # Replace {id} with a valid post ID
-PUT http://localhost:8080/api/posts/2
+PUT http://localhost:8080/api/posts/1
 Content-Type: application/json
 
 {
