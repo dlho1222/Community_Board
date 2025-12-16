@@ -6,7 +6,7 @@ Content-Type: application/json
 {
   "username": "test_user1",
   "password": "12341234",
-  "email": "test_user11@example.com"
+  "email": "test_user1@naver.com"
 }
 
 ### Login User
@@ -14,7 +14,7 @@ POST http://localhost:8080/api/users/login
 Content-Type: application/json
 
 {
-  "email": "test_user11@example.com",
+  "email": "test_user1@naver.com",
   "password": "12341234"
 }
 
@@ -32,5 +32,63 @@ Content-Type: application/json
 
 {
   "username": "new_user",
-  "password": "new_pass"
+  "password": "password"
 }
+
+### Create Post
+# Use a valid userId from a registered user
+POST http://localhost:8080/api/posts
+Content-Type: application/json
+
+{
+  "title": "My First Public Post 2",
+  "content": "This is the content of my first public post.",
+  "userId": 1,
+  "secret": false
+}
+
+### Create Secret Post
+# Use a valid userId from a registered user
+POST http://localhost:8080/api/posts
+Content-Type: application/json
+
+{
+  "title": "My First Secret Post 3",
+  "content": "This is the content of my first secret post, only for me!",
+  "userId": 1,
+  "secret": true
+}
+
+### Get All Posts
+# Should only return non-secret posts
+GET http://localhost:8080/api/posts
+
+### Get Post by ID
+# Replace {id} with a valid post ID
+GET http://localhost:8080/api/posts/2
+
+### Update Post
+# Replace {id} with a valid post ID
+PUT http://localhost:8080/api/posts/3
+Content-Type: application/json
+
+{
+  "title": "Updated Public Post Titleaaaa",
+  "content": "This is the updated content of the public post.",
+  "secret": false
+}
+
+### Make Post Secret
+# Replace {id} with a valid post ID
+PUT http://localhost:8080/api/posts/2
+Content-Type: application/json
+
+{
+  "title": "Updated Public Post Title",
+  "content": "This is the updated content, now secret.",
+  "secret": true
+}
+
+### Delete Post
+# Replace {id} with a valid post ID
+DELETE http://localhost:8080/api/posts/3
