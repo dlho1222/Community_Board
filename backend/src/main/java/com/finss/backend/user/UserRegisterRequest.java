@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
+//클라이언트가 보내는 데이터 형식을 정의하는 파일 클라이언트 -> 서버 역직렬화(JSON -> 객체) ,  (서버 -> 클라이언트 - Response 직렬화)
 @Getter
 @Setter
 @NoArgsConstructor

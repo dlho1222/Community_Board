@@ -38,4 +38,17 @@ public class UserServiceImpl implements UserService {
         // 사용자 저장
         userRepository.save(user);
     }
+
+    @Override
+    public User login(UserLoginRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
+
+        // TODO: 비밀번호 암호화 및 비교 로직 추가 필요
+        if (!user.getPassword().equals(request.getPassword())) {
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+        }
+
+        return user;
+    }
 }
