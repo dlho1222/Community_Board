@@ -1,12 +1,9 @@
 package com.finss.backend.file;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
-import java.util.Optional;
 
-public interface FileRepository {
-    Long save(File file);
-    Optional<File> findById(Long id);
-    List<File> findByPostId(Long postId);
-    int deleteById(Long id);
-    int deleteByPostId(Long postId);
+public interface FileRepository extends JpaRepository<File, Long> {
+    List<File> findByPost_Id(Long postId); // Renamed to match JPA relationship
+    void deleteAllByPost_Id(Long postId);
 }

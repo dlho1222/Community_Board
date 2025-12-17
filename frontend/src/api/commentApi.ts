@@ -19,8 +19,12 @@ export interface CommentCreateRequest {
 const commentApi = {
     getCommentsByPostId: async (postId: number, currentUserId?: number, isAdmin?: boolean): Promise<CommentResponse[]> => {
         const params = new URLSearchParams();
-        if (currentUserId !== undefined) params.append('currentUserId', currentUserId.toString());
-        if (isAdmin !== undefined) params.append('isAdmin', isAdmin.toString());
+        if (currentUserId !== undefined && currentUserId !== null && !isNaN(currentUserId)) {
+            params.append('currentUserId', currentUserId.toString());
+        }
+        if (isAdmin === true) {
+            params.append('isAdmin', 'true');
+        }
 
         const response = await api.get<CommentResponse[]>(`/api/comments/post/${postId}?${params.toString()}`);
         return response.data;
@@ -28,8 +32,12 @@ const commentApi = {
 
     createComment: async (commentData: CommentCreateRequest, currentUserId?: number, isAdmin?: boolean): Promise<CommentResponse> => {
         const params = new URLSearchParams();
-        if (currentUserId !== undefined) params.append('currentUserId', currentUserId.toString());
-        if (isAdmin !== undefined) params.append('isAdmin', isAdmin.toString());
+        if (currentUserId !== undefined && currentUserId !== null && !isNaN(currentUserId)) {
+            params.append('currentUserId', currentUserId.toString());
+        }
+        if (isAdmin === true) {
+            params.append('isAdmin', 'true');
+        }
 
         const response = await api.post<CommentResponse>(`/api/comments?${params.toString()}`, commentData);
         return response.data;
@@ -47,8 +55,12 @@ const commentApi = {
 
     deleteComment: async (id: number, currentUserId?: number, isAdmin?: boolean): Promise<void> => {
         const params = new URLSearchParams();
-        if (currentUserId !== undefined) params.append('currentUserId', currentUserId.toString());
-        if (isAdmin !== undefined) params.append('isAdmin', isAdmin.toString());
+        if (currentUserId !== undefined && currentUserId !== null && !isNaN(currentUserId)) {
+            params.append('currentUserId', currentUserId.toString());
+        }
+        if (isAdmin === true) {
+            params.append('isAdmin', 'true');
+        }
 
         await api.delete(`/api/comments/${id}?${params.toString()}`);
     },

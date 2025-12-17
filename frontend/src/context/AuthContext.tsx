@@ -31,9 +31,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (storedUser) {
             try {
                 const parsedUser = JSON.parse(storedUser);
-                setUser(parsedUser);
-                console.log('AuthContext: User loaded from localStorage:', parsedUser);
-                console.log('AuthContext: User ID from localStorage:', parsedUser.id, 'Type:', typeof parsedUser.id);
+                // Ensure id is a number for consistent type matching
+                const userWithNumberId = { ...parsedUser, id: Number(parsedUser.id) };
+                setUser(userWithNumberId);
+                console.log('AuthContext: User loaded from localStorage:', userWithNumberId);
+                console.log('AuthContext: User ID from localStorage:', userWithNumberId.id, 'Type:', typeof userWithNumberId.id);
             } catch (e) {
                 console.error('AuthContext: Failed to parse user from localStorage', e);
                 localStorage.removeItem('user');
@@ -42,10 +44,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }, []);
 
     const login = (userData: User) => {
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-        console.log('AuthContext: User data set by login function:', userData);
-        console.log('AuthContext: User ID set by login function:', userData.id, 'Type:', typeof userData.id);
+        // Ensure id is a number for consistent type matching
+        const userWithNumberId = { ...userData, id: Number(userData.id) };
+        setUser(userWithNumberId);
+        localStorage.setItem('user', JSON.stringify(userWithNumberId));
+        console.log('AuthContext: User data set by login function:', userWithNumberId);
+        console.log('AuthContext: User ID set by login function:', userWithNumberId.id, 'Type:', typeof userWithNumberId.id);
     };
 
     const logout = () => {

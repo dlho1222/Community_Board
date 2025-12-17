@@ -29,8 +29,12 @@ export interface PostUpdateRequest {
 const postApi = {
     getAllPosts: async (currentUserId?: number, isAdmin?: boolean): Promise<PostResponse[]> => {
         const params = new URLSearchParams();
-        if (currentUserId !== undefined) params.append('currentUserId', currentUserId.toString());
-        if (isAdmin !== undefined) params.append('isAdmin', isAdmin.toString());
+        if (currentUserId !== undefined && currentUserId !== null && !isNaN(currentUserId)) {
+            params.append('currentUserId', currentUserId.toString());
+        }
+        if (isAdmin === true) {
+            params.append('isAdmin', 'true');
+        }
 
         const response = await api.get<PostResponse[]>(`/api/posts?${params.toString()}`);
         return response.data;
@@ -38,8 +42,12 @@ const postApi = {
 
     getPostById: async (id: number, currentUserId?: number, isAdmin?: boolean): Promise<PostResponse> => {
         const params = new URLSearchParams();
-        if (currentUserId !== undefined) params.append('currentUserId', currentUserId.toString());
-        if (isAdmin !== undefined) params.append('isAdmin', isAdmin.toString());
+        if (currentUserId !== undefined && currentUserId !== null && !isNaN(currentUserId)) {
+            params.append('currentUserId', currentUserId.toString());
+        }
+        if (isAdmin === true) {
+            params.append('isAdmin', 'true');
+        }
 
         const response = await api.get<PostResponse>(`/api/posts/${id}?${params.toString()}`);
         return response.data;
@@ -52,8 +60,12 @@ const postApi = {
 
     updatePost: async (id: number, postData: PostUpdateRequest, currentUserId?: number, isAdmin?: boolean): Promise<PostResponse> => {
         const params = new URLSearchParams();
-        if (currentUserId !== undefined) params.append('currentUserId', currentUserId.toString());
-        if (isAdmin !== undefined) params.append('isAdmin', isAdmin.toString());
+        if (currentUserId !== undefined && currentUserId !== null && !isNaN(currentUserId)) {
+            params.append('currentUserId', currentUserId.toString());
+        }
+        if (isAdmin === true) {
+            params.append('isAdmin', 'true');
+        }
 
         const response = await api.put<PostResponse>(`/api/posts/${id}?${params.toString()}`, postData);
         return response.data;
@@ -61,8 +73,12 @@ const postApi = {
 
     deletePost: async (id: number, currentUserId?: number, isAdmin?: boolean): Promise<void> => {
         const params = new URLSearchParams();
-        if (currentUserId !== undefined) params.append('currentUserId', currentUserId.toString());
-        if (isAdmin !== undefined) params.append('isAdmin', isAdmin.toString());
+        if (currentUserId !== undefined && currentUserId !== null && !isNaN(currentUserId)) {
+            params.append('currentUserId', currentUserId.toString());
+        }
+        if (isAdmin === true) {
+            params.append('isAdmin', 'true');
+        }
 
         await api.delete(`/api/posts/${id}?${params.toString()}`);
     },
@@ -70,8 +86,12 @@ const postApi = {
     searchPosts: async (keyword: string, currentUserId?: number, isAdmin?: boolean): Promise<PostResponse[]> => {
         const params = new URLSearchParams();
         params.append('keyword', keyword);
-        if (currentUserId !== undefined) params.append('currentUserId', currentUserId.toString());
-        if (isAdmin !== undefined) params.append('isAdmin', isAdmin.toString());
+        if (currentUserId !== undefined && currentUserId !== null && !isNaN(currentUserId)) {
+            params.append('currentUserId', currentUserId.toString());
+        }
+        if (isAdmin === true) {
+            params.append('isAdmin', 'true');
+        }
 
         const response = await api.get<PostResponse[]>(`/api/posts/search?${params.toString()}`);
         return response.data;

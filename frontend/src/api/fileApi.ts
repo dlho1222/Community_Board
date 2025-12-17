@@ -26,8 +26,12 @@ export const fileApi = {
 
   downloadFile: async (fileId: number, currentUserId?: number, isAdmin?: boolean): Promise<Blob> => {
     const params = new URLSearchParams();
-    if (currentUserId !== undefined) params.append('currentUserId', currentUserId.toString());
-    if (isAdmin !== undefined) params.append('isAdmin', isAdmin.toString());
+    if (currentUserId !== undefined && currentUserId !== null && !isNaN(currentUserId)) {
+      params.append('currentUserId', currentUserId.toString());
+    }
+    if (isAdmin === true) {
+      params.append('isAdmin', 'true');
+    }
 
     const response = await api.get(`/api/files/${fileId}?${params.toString()}`, {
       responseType: 'blob', // Important for downloading files
@@ -37,8 +41,12 @@ export const fileApi = {
 
   getFilesByPostId: async (postId: number, currentUserId?: number, isAdmin?: boolean): Promise<FileResponse[]> => {
     const params = new URLSearchParams();
-    if (currentUserId !== undefined) params.append('currentUserId', currentUserId.toString());
-    if (isAdmin !== undefined) params.append('isAdmin', isAdmin.toString());
+    if (currentUserId !== undefined && currentUserId !== null && !isNaN(currentUserId)) {
+      params.append('currentUserId', currentUserId.toString());
+    }
+    if (isAdmin === true) {
+      params.append('isAdmin', 'true');
+    }
 
     const response = await api.get<FileResponse[]>(`/api/files/post/${postId}?${params.toString()}`);
     return response.data;
@@ -46,8 +54,12 @@ export const fileApi = {
 
   deleteFile: async (fileId: number, currentUserId?: number, isAdmin?: boolean): Promise<void> => {
     const params = new URLSearchParams();
-    if (currentUserId !== undefined) params.append('currentUserId', currentUserId.toString());
-    if (isAdmin !== undefined) params.append('isAdmin', isAdmin.toString());
+    if (currentUserId !== undefined && currentUserId !== null && !isNaN(currentUserId)) {
+      params.append('currentUserId', currentUserId.toString());
+    }
+    if (isAdmin === true) {
+      params.append('isAdmin', 'true');
+    }
 
     await api.delete(`/api/files/${fileId}?${params.toString()}`);
   },
