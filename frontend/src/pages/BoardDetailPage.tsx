@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { Container, Card, Button, Alert, Spinner, ListGroup, Form } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
 import postApi from '../api/postApi';
@@ -6,6 +6,8 @@ import type { PostResponse } from '../api/postApi'; // Explicitly import type on
 import commentApi from '../api/commentApi';
 import type { CommentResponse } from '../api/commentApi';
 import { AuthContext } from '../context/AuthContext'; // Import AuthContext
+import { fileApi } from '../api/fileApi'; // Import fileApi and FileResponse
+import type { FileResponse } from '../api/fileApi';
 
 const BoardDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -14,6 +16,7 @@ const BoardDetailPage: React.FC = () => {
 
   const [post, setPost] = useState<PostResponse | null>(null);
   const [comments, setComments] = useState<CommentResponse[]>([]);
+  const [files, setFiles] = useState<FileResponse[]>([]); // New state for files
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,36 +30,50 @@ const BoardDetailPage: React.FC = () => {
   const isAuthor = user && post && user.id === post.authorId;
   const isAdmin = user && user.username === 'admin'; // Simple admin check for now
 
-  useEffect(() => {
-    const fetchPostAndComments = async () => {
-      if (!id) {
-        setError('Post ID is missing.');
-        setLoading(false);
-        return;
-      }
-      try {
-        setLoading(true);
-        const postData = await postApi.getPostById(parseInt(id));
-        setPost(postData);
-        const commentsData = await commentApi.getCommentsByPostId(parseInt(id));
-        setComments(commentsData);
-      } catch (err: any) {
-        console.error('Failed to fetch post or comments:', err);
-        if (err.response && err.response.data && err.response.data.message) {
-            setError(err.response.data.message);
-        } else if (err.response && err.response.data) {
-            setError(err.response.data);
-        }
-        else {
-            setError('Failed to load post or comments. Please try again later.');
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Function to format file size
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = 2;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  };
 
-    fetchPostAndComments();
+  const fetchPostAndRelatedData = useCallback(async () => {
+    if (!id) {
+      setError('Post ID is missing.');
+      setLoading(false);
+      return;
+    }
+    try {
+      setLoading(true);
+      const postId = parseInt(id);
+      const postData = await postApi.getPostById(postId);
+      setPost(postData);
+      const commentsData = await commentApi.getCommentsByPostId(postId);
+      setComments(commentsData);
+      const filesData = await fileApi.getFilesByPostId(postId); // Fetch files
+      setFiles(filesData); // Set files state
+    } catch (err: any) {
+      console.error('Failed to fetch post or comments:', err);
+      if (err.response && err.response.data && err.response.data.message) {
+          setError(err.response.data.message);
+      } else if (err.response && err.response.data) {
+          setError(err.response.data);
+      }
+      else {
+          setError('Failed to load post or comments. Please try again later.');
+      }
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+
+  useEffect(() => {
+    fetchPostAndRelatedData();
+  }, [fetchPostAndRelatedData]);
 
   // Debugging logs for isAuthor
   useEffect(() => {
@@ -127,6 +144,37 @@ const BoardDetailPage: React.FC = () => {
     }
   };
 
+  const handleFileDownload = async (fileId: number, fileName: string) => {
+    try {
+      const blob = await fileApi.downloadFile(fileId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName; // Use the original file name for download
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download file:', err);
+      setError('Failed to download file. Please try again.');
+    }
+  };
+
+  const handleFileDelete = async (fileId: number) => {
+    if (!window.confirm('Are you sure you want to delete this file?')) {
+      return;
+    }
+    try {
+      await fileApi.deleteFile(fileId);
+      setFiles(files.filter(file => file.id !== fileId)); // Update local state
+    } catch (err) {
+      console.error('Failed to delete file:', err);
+      setError('Failed to delete file. Please try again.');
+    }
+  };
+
+
   if (loading) {
     return (
       <Container className="mt-4 text-center">
@@ -167,9 +215,32 @@ const BoardDetailPage: React.FC = () => {
               : post.content}
           </Card.Text>
 
+          {/* Files Section */}
+          {files.length > 0 && (
+            <div className="mt-4">
+              <h5>첨부 파일</h5>
+              <ListGroup>
+                {files.map((file) => (
+                  <ListGroup.Item key={file.id} className="d-flex justify-content-between align-items-center">
+                    <div>
+                      <Button variant="link" onClick={() => handleFileDownload(file.id, file.fileName)} className="p-0 align-baseline">
+                        {file.fileName} ({formatFileSize(file.fileSize)})
+                      </Button>
+                    </div>
+                    {(isAuthor || isAdmin) && (
+                      <Button variant="danger" size="sm" onClick={() => handleFileDelete(file.id)}>
+                        삭제
+                      </Button>
+                    )}
+                  </ListGroup.Item>
+                ))}
+              </ListGroup>
+            </div>
+          )}
+
           {/* Edit and Delete buttons */}
           {(isAuthor || isAdmin) && (
-            <div className="d-flex justify-content-end mb-3">
+            <div className="d-flex justify-content-end mb-3 mt-4">
               <Button variant="secondary" className="me-2" onClick={() => navigate(`/board/edit/${post.id}`)} disabled={loading}>Edit</Button>
               <Button variant="danger" onClick={handleDelete} disabled={loading}>Delete</Button>
             </div>
@@ -217,7 +288,7 @@ const BoardDetailPage: React.FC = () => {
             )}
           </div>
           
-          <Button variant="primary" onClick={() => navigate('/board')} disabled={loading}>
+          <Button variant="primary" onClick={() => navigate('/board')} disabled={loading} className="mt-4">
             목록으로
           </Button>
         </Card.Body>

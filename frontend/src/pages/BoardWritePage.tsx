@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import postApi from '../api/postApi';
 import type { PostCreateRequest, PostUpdateRequest, PostResponse } from '../api/postApi'; // Explicitly import types
 import { AuthContext } from '../context/AuthContext';
+import { fileApi } from '../api/fileApi'; // Import fileApi
 
 const BoardWritePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -14,6 +15,7 @@ const BoardWritePage: React.FC = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [secret, setSecret] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null); // New state for files
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [initialLoading, setInitialLoading] = useState(true); // For fetching existing post data
@@ -47,6 +49,10 @@ const BoardWritePage: React.FC = () => {
     }
   }, [isEditing, id]);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedFiles(e.target.files);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -59,21 +65,31 @@ const BoardWritePage: React.FC = () => {
     }
 
     try {
+      let postId: number;
       if (isEditing && id) {
         const updatedPost: PostUpdateRequest = { title, content, secret };
         await postApi.updatePost(parseInt(id), updatedPost);
-        navigate(`/board/${id}`);
+        postId = parseInt(id);
       } else {
         const newPost: PostCreateRequest = { title, content, userId: user.id, secret };
         const response = await postApi.createPost(newPost);
-        navigate(`/board/${response.id}`);
+        postId = response.id;
       }
+
+      // Upload files if selected
+      if (selectedFiles && selectedFiles.length > 0) {
+        for (let i = 0; i < selectedFiles.length; i++) {
+          await fileApi.uploadFile(selectedFiles[i], postId);
+        }
+      }
+
+      navigate(`/board/${postId}`);
     } catch (err: any) {
-      console.error('Failed to save post:', err);
+      console.error('Failed to save post or upload files:', err);
       if (err.response) {
-        setError(err.response.data.message || 'Error saving post.');
+        setError(err.response.data.message || 'Error saving post or uploading files.');
       } else {
-        setError('Error saving post. No response from server.');
+        setError('Error saving post or uploading files. No response from server.');
       }
     } finally {
       setLoading(false);
@@ -122,13 +138,10 @@ const BoardWritePage: React.FC = () => {
               />
             </Form.Group>
 
-            {/* File upload removed as not yet implemented in backend */}
-            {/*
             <Form.Group controlId="formFile" className="mb-3">
               <Form.Label>파일 첨부</Form.Label>
-              <Form.Control type="file" multiple />
+              <Form.Control type="file" multiple onChange={handleFileChange} disabled={loading} />
             </Form.Group>
-            */}
 
             <Form.Group className="mb-3" controlId="formSecret">
               <Form.Check
