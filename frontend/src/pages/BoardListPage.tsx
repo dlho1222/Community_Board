@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Container, Table, Button, Form, FormControl, InputGroup, Alert, Spinner } from 'react-bootstrap';
 import postApi from '../api/postApi';
 import type { PostResponse } from '../api/postApi'; // Explicitly import type only, if your TypeScript version supports it
+import { AuthContext } from '../context/AuthContext'; // Import AuthContext
 
 import { useNavigate } from 'react-router-dom';
 
@@ -12,6 +13,10 @@ const BoardListPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>(''); // State for search input
   const navigate = useNavigate();
+  const authContext = useContext(AuthContext);
+
+  const { user } = authContext || { user: null }; // Default to null if context is not available
+  const isAdmin = user?.username === 'admin';
 
   const fetchPosts = async (keyword?: string) => {
     try {
@@ -19,14 +24,18 @@ const BoardListPage: React.FC = () => {
       setError(null);
       let data: PostResponse[];
       if (keyword && keyword.trim() !== '') {
-        data = await postApi.searchPosts(keyword);
+        data = await postApi.searchPosts(keyword, user?.id, isAdmin);
       } else {
-        data = await postApi.getAllPosts();
+        data = await postApi.getAllPosts(user?.id, isAdmin);
       }
       setPosts(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch posts:', err);
-      setError('Failed to load posts. Please try again later.');
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Failed to load posts. Please try again later.');
+      }
     } finally {
       setLoading(false);
     }
@@ -34,7 +43,7 @@ const BoardListPage: React.FC = () => {
 
   useEffect(() => {
     fetchPosts(); // Initial load of all posts
-  }, []);
+  }, [user, isAdmin]); // Re-fetch posts if user context changes
 
   const handleWritePost = () => {
     navigate('/board/write');

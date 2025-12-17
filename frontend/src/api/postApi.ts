@@ -27,13 +27,21 @@ export interface PostUpdateRequest {
 }
 
 const postApi = {
-    getAllPosts: async (): Promise<PostResponse[]> => {
-        const response = await api.get<PostResponse[]>('/api/posts');
+    getAllPosts: async (currentUserId?: number, isAdmin?: boolean): Promise<PostResponse[]> => {
+        const params = new URLSearchParams();
+        if (currentUserId !== undefined) params.append('currentUserId', currentUserId.toString());
+        if (isAdmin !== undefined) params.append('isAdmin', isAdmin.toString());
+
+        const response = await api.get<PostResponse[]>(`/api/posts?${params.toString()}`);
         return response.data;
     },
 
-    getPostById: async (id: number): Promise<PostResponse> => {
-        const response = await api.get<PostResponse>(`/api/posts/${id}`);
+    getPostById: async (id: number, currentUserId?: number, isAdmin?: boolean): Promise<PostResponse> => {
+        const params = new URLSearchParams();
+        if (currentUserId !== undefined) params.append('currentUserId', currentUserId.toString());
+        if (isAdmin !== undefined) params.append('isAdmin', isAdmin.toString());
+
+        const response = await api.get<PostResponse>(`/api/posts/${id}?${params.toString()}`);
         return response.data;
     },
 
@@ -42,17 +50,30 @@ const postApi = {
         return response.data;
     },
 
-    updatePost: async (id: number, postData: PostUpdateRequest): Promise<PostResponse> => {
-        const response = await api.put<PostResponse>(`/api/posts/${id}`, postData);
+    updatePost: async (id: number, postData: PostUpdateRequest, currentUserId?: number, isAdmin?: boolean): Promise<PostResponse> => {
+        const params = new URLSearchParams();
+        if (currentUserId !== undefined) params.append('currentUserId', currentUserId.toString());
+        if (isAdmin !== undefined) params.append('isAdmin', isAdmin.toString());
+
+        const response = await api.put<PostResponse>(`/api/posts/${id}?${params.toString()}`, postData);
         return response.data;
     },
 
-    deletePost: async (id: number): Promise<void> => {
-        await api.delete(`/api/posts/${id}`);
+    deletePost: async (id: number, currentUserId?: number, isAdmin?: boolean): Promise<void> => {
+        const params = new URLSearchParams();
+        if (currentUserId !== undefined) params.append('currentUserId', currentUserId.toString());
+        if (isAdmin !== undefined) params.append('isAdmin', isAdmin.toString());
+
+        await api.delete(`/api/posts/${id}?${params.toString()}`);
     },
 
-    searchPosts: async (keyword: string): Promise<PostResponse[]> => {
-        const response = await api.get<PostResponse[]>(`/api/posts/search?keyword=${keyword}`);
+    searchPosts: async (keyword: string, currentUserId?: number, isAdmin?: boolean): Promise<PostResponse[]> => {
+        const params = new URLSearchParams();
+        params.append('keyword', keyword);
+        if (currentUserId !== undefined) params.append('currentUserId', currentUserId.toString());
+        if (isAdmin !== undefined) params.append('isAdmin', isAdmin.toString());
+
+        const response = await api.get<PostResponse[]>(`/api/posts/search?${params.toString()}`);
         return response.data;
     },
 };

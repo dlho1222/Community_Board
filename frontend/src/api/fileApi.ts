@@ -24,19 +24,31 @@ export const fileApi = {
     return response.data;
   },
 
-  downloadFile: async (fileId: number): Promise<Blob> => {
-    const response = await api.get(`/api/files/${fileId}`, {
+  downloadFile: async (fileId: number, currentUserId?: number, isAdmin?: boolean): Promise<Blob> => {
+    const params = new URLSearchParams();
+    if (currentUserId !== undefined) params.append('currentUserId', currentUserId.toString());
+    if (isAdmin !== undefined) params.append('isAdmin', isAdmin.toString());
+
+    const response = await api.get(`/api/files/${fileId}?${params.toString()}`, {
       responseType: 'blob', // Important for downloading files
     });
     return response.data;
   },
 
-  getFilesByPostId: async (postId: number): Promise<FileResponse[]> => {
-    const response = await api.get<FileResponse[]>(`/api/files/post/${postId}`);
+  getFilesByPostId: async (postId: number, currentUserId?: number, isAdmin?: boolean): Promise<FileResponse[]> => {
+    const params = new URLSearchParams();
+    if (currentUserId !== undefined) params.append('currentUserId', currentUserId.toString());
+    if (isAdmin !== undefined) params.append('isAdmin', isAdmin.toString());
+
+    const response = await api.get<FileResponse[]>(`/api/files/post/${postId}?${params.toString()}`);
     return response.data;
   },
 
-  deleteFile: async (fileId: number): Promise<void> => {
-    await api.delete(`/api/files/${fileId}`);
+  deleteFile: async (fileId: number, currentUserId?: number, isAdmin?: boolean): Promise<void> => {
+    const params = new URLSearchParams();
+    if (currentUserId !== undefined) params.append('currentUserId', currentUserId.toString());
+    if (isAdmin !== undefined) params.append('isAdmin', isAdmin.toString());
+
+    await api.delete(`/api/files/${fileId}?${params.toString()}`);
   },
 };

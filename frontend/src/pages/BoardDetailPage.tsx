@@ -28,7 +28,7 @@ const BoardDetailPage: React.FC = () => {
 
   const { user } = authContext;
   const isAuthor = user && post && user.id === post.authorId;
-  const isAdmin = user && user.username === 'admin'; // Simple admin check for now
+  const isAdmin = user?.username === 'admin'; // Use user from authContext, not post
 
   // Function to format file size
   const formatFileSize = (bytes: number): string => {
@@ -49,11 +49,11 @@ const BoardDetailPage: React.FC = () => {
     try {
       setLoading(true);
       const postId = parseInt(id);
-      const postData = await postApi.getPostById(postId);
+      const postData = await postApi.getPostById(postId, user?.id, isAdmin);
       setPost(postData);
-      const commentsData = await commentApi.getCommentsByPostId(postId);
+      const commentsData = await commentApi.getCommentsByPostId(postId, user?.id, isAdmin);
       setComments(commentsData);
-      const filesData = await fileApi.getFilesByPostId(postId); // Fetch files
+      const filesData = await fileApi.getFilesByPostId(postId, user?.id, isAdmin); // Fetch files
       setFiles(filesData); // Set files state
     } catch (err: any) {
       console.error('Failed to fetch post or comments:', err);
@@ -68,14 +68,14 @@ const BoardDetailPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, user?.id, isAdmin]); // Add user?.id and isAdmin to dependencies
 
 
   useEffect(() => {
     fetchPostAndRelatedData();
   }, [fetchPostAndRelatedData]);
 
-  // Debugging logs for isAuthor
+  // Debugging logs for isAuthor (removed isAdmin from here, it's already calculated above)
   useEffect(() => {
     if (user && post) {
       console.log('--- Debugging isAuthor ---');
@@ -85,7 +85,7 @@ const BoardDetailPage: React.FC = () => {
       console.log('Post Author ID (post.authorId):', post.authorId, 'Type:', typeof post.authorId);
       console.log('Comparison (user.id === post.authorId):', user.id === post.authorId);
       console.log('Comparison (Number(user.id) === post.authorId):', Number(user.id) === post.authorId);
-      console.log('isAdmin:', isAdmin); // Check if isAdmin is working
+      console.log('isAdmin:', isAdmin);
       console.log('isAuthor or isAdmin:', isAuthor || isAdmin);
       console.log('--------------------------');
     }
@@ -102,12 +102,16 @@ const BoardDetailPage: React.FC = () => {
         content: newComment,
         userId: user.id,
         postId: post.id,
-      });
+      }, user.id, isAdmin); // Pass currentUserId and isAdmin
       setComments([...comments, newCommentData]);
       setNewComment('');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to create comment:', err);
-      setError('Failed to post comment. Please try again.');
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Failed to post comment. Please try again.');
+      }
     }
   };
 
@@ -116,11 +120,15 @@ const BoardDetailPage: React.FC = () => {
       return;
     }
     try {
-      await commentApi.deleteComment(commentId);
+      await commentApi.deleteComment(commentId, user?.id, isAdmin); // Pass currentUserId and isAdmin
       setComments(comments.filter((comment) => comment.id !== commentId));
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to delete comment:', err);
-      setError('Failed to delete comment. Please try again.');
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Failed to delete comment. Please try again.');
+      }
     }
   };
 
@@ -130,7 +138,7 @@ const BoardDetailPage: React.FC = () => {
     }
     try {
       setLoading(true);
-      await postApi.deletePost(post.id);
+      await postApi.deletePost(post.id, user?.id, isAdmin); // Pass currentUserId and isAdmin
       navigate('/board'); // Redirect to board list after deletion
     } catch (err: any) {
       console.error('Failed to delete post:', err);
@@ -146,7 +154,7 @@ const BoardDetailPage: React.FC = () => {
 
   const handleFileDownload = async (fileId: number, fileName: string) => {
     try {
-      const blob = await fileApi.downloadFile(fileId);
+      const blob = await fileApi.downloadFile(fileId, user?.id, isAdmin); // Pass currentUserId and isAdmin
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -155,9 +163,13 @@ const BoardDetailPage: React.FC = () => {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to download file:', err);
-      setError('Failed to download file. Please try again.');
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Failed to download file. Please try again.');
+      }
     }
   };
 
@@ -166,11 +178,15 @@ const BoardDetailPage: React.FC = () => {
       return;
     }
     try {
-      await fileApi.deleteFile(fileId);
+      await fileApi.deleteFile(fileId, user?.id, isAdmin); // Pass currentUserId and isAdmin
       setFiles(files.filter(file => file.id !== fileId)); // Update local state
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to delete file:', err);
-      setError('Failed to delete file. Please try again.');
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Failed to delete file. Please try again.');
+      }
     }
   };
 

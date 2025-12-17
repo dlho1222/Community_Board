@@ -1,5 +1,6 @@
 package com.finss.backend.post;
 
+import com.finss.backend.common.AccessDeniedException;
 import com.finss.backend.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -63,7 +64,7 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public PostResponse getPostById(Long id) {
+    public PostResponse getPostById(Long id, Long currentUserId, boolean isAdmin) {
         String findPostSql = "SELECT p.id, p.title, p.content, p.is_secret, p.created_at, p.updated_at, u.id AS user_id, u.username, u.password, u.email FROM posts p JOIN users u ON p.user_id = u.id WHERE p.id = ?";
         List<Post> posts = jdbcTemplate.query(findPostSql, this::mapRowToPost, id);
 
@@ -73,33 +74,40 @@ public class PostServiceImpl implements PostService {
 
         Post post = posts.get(0);
 
-        // TODO: [Security] If post.isSecret() is true, check if the current user is the author or an admin.
-        // If not, throw an authorization exception.
+        // Authorization check for secret posts
+        if (post.isSecret()) {
+            if (!isAdmin && (currentUserId == null || !currentUserId.equals(post.getUser().getId()))) {
+                throw new AccessDeniedException("비밀글은 작성자 또는 관리자만 볼 수 있습니다.");
+            }
+        }
 
         return PostResponse.fromEntity(post);
     }
 
     @Override
-    public List<PostResponse> getAllPosts() {
+    public List<PostResponse> getAllPosts(Long currentUserId, boolean isAdmin) {
         String findAllPostsSql = "SELECT p.id, p.title, p.content, p.is_secret, p.created_at, p.updated_at, u.id AS user_id, u.username, u.password, u.email FROM posts p JOIN users u ON p.user_id = u.id ORDER BY p.created_at DESC";
         List<Post> posts = jdbcTemplate.query(findAllPostsSql, this::mapRowToPost);
 
         return posts.stream()
                 .map(post -> {
+                    // Apply authorization logic for each post
                     if (post.isSecret()) {
-                        return PostResponse.builder()
-                                .id(post.getId())
-                                .title("비밀글입니다.")
-                                .content("") // Content is hidden
-                                .authorId(post.getUser().getId()) // Added for frontend auth checks
-                                .authorName(post.getUser().getUsername())
-                                .createdAt(post.getCreatedAt())
-                                .updatedAt(post.getUpdatedAt())
-                                .secret(true)
-                                .build();
-                    } else {
-                        return PostResponse.fromEntity(post);
+                        if (!isAdmin && (currentUserId == null || !currentUserId.equals(post.getUser().getId()))) {
+                            // Hide content and show generic title for unauthorized secret posts
+                            return PostResponse.builder()
+                                    .id(post.getId())
+                                    .title("비밀글입니다.")
+                                    .content("") // Content is hidden
+                                    .authorId(post.getUser().getId())
+                                    .authorName(post.getUser().getUsername())
+                                    .createdAt(post.getCreatedAt())
+                                    .updatedAt(post.getUpdatedAt())
+                                    .secret(true)
+                                    .build();
+                        }
                     }
+                    return PostResponse.fromEntity(post);
                 })
                 .collect(Collectors.toList());
     }
@@ -134,7 +142,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
-    public PostResponse updatePost(Long id, PostUpdateRequest request) {
+    public PostResponse updatePost(Long id, PostUpdateRequest request, Long currentUserId, boolean isAdmin) {
         String findPostSql = "SELECT p.id, p.title, p.content, p.is_secret, p.created_at, p.updated_at, u.id AS user_id, u.username, u.password, u.email FROM posts p JOIN users u ON p.user_id = u.id WHERE p.id = ?";
         List<Post> posts = jdbcTemplate.query(findPostSql, this::mapRowToPost, id);
 
@@ -144,6 +152,11 @@ public class PostServiceImpl implements PostService {
 
         Post existingPost = posts.get(0);
 
+        // Authorization check for update
+        if (!isAdmin && (currentUserId == null || !currentUserId.equals(existingPost.getUser().getId()))) {
+            throw new AccessDeniedException("게시글을 수정할 권한이 없습니다.");
+        }
+
         String updatePostSql = "UPDATE posts SET title = ?, content = ?, is_secret = ?, updated_at = NOW() WHERE id = ?";
         jdbcTemplate.update(updatePostSql, request.getTitle(), request.getContent(), request.isSecret(), id);
 
@@ -152,6 +165,7 @@ public class PostServiceImpl implements PostService {
                 .title(request.getTitle())
                 .content(request.getContent())
                 .secret(request.isSecret())
+                .authorId(existingPost.getUser().getId()) // Keep original author ID
                 .authorName(existingPost.getUser().getUsername()) // Keep original author name
                 .createdAt(existingPost.getCreatedAt())
                 .updatedAt(LocalDateTime.now())
@@ -160,12 +174,19 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
-    public void deletePost(Long id) {
+    public void deletePost(Long id, Long currentUserId, boolean isAdmin) {
         String findPostSql = "SELECT p.id, p.title, p.content, p.is_secret, p.created_at, p.updated_at, u.id AS user_id, u.username, u.password, u.email FROM posts p JOIN users u ON p.user_id = u.id WHERE p.id = ?";
         List<Post> posts = jdbcTemplate.query(findPostSql, this::mapRowToPost, id);
 
         if (posts.isEmpty()) {
             throw new IllegalArgumentException("Post not found with id: " + id);
+        }
+
+        Post existingPost = posts.get(0);
+
+        // Authorization check for delete
+        if (!isAdmin && (currentUserId == null || !currentUserId.equals(existingPost.getUser().getId()))) {
+            throw new AccessDeniedException("게시글을 삭제할 권한이 없습니다.");
         }
 
         String deletePostSql = "DELETE FROM posts WHERE id = ?";
@@ -174,27 +195,30 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PostResponse> searchPostsByTitle(String keyword) {
+    public List<PostResponse> searchPostsByTitle(String keyword, Long currentUserId, boolean isAdmin) {
         String searchSql = "SELECT p.id, p.title, p.content, p.is_secret, p.created_at, p.updated_at, u.id AS user_id, u.username, u.password, u.email FROM posts p JOIN users u ON p.user_id = u.id WHERE p.title LIKE ? ORDER BY p.created_at DESC";
         String searchPattern = "%" + keyword + "%";
         List<Post> posts = jdbcTemplate.query(searchSql, this::mapRowToPost, searchPattern);
 
         return posts.stream()
                 .map(post -> {
+                    // Apply authorization logic for each post
                     if (post.isSecret()) {
-                        return PostResponse.builder()
-                                .id(post.getId())
-                                .title("비밀글입니다.")
-                                .content("")
-                                .authorId(post.getUser().getId())
-                                .authorName(post.getUser().getUsername())
-                                .createdAt(post.getCreatedAt())
-                                .updatedAt(post.getUpdatedAt())
-                                .secret(true)
-                                .build();
-                    } else {
-                        return PostResponse.fromEntity(post);
+                        if (!isAdmin && (currentUserId == null || !currentUserId.equals(post.getUser().getId()))) {
+                            // Hide content and show generic title for unauthorized secret posts
+                            return PostResponse.builder()
+                                    .id(post.getId())
+                                    .title("비밀글입니다.")
+                                    .content("")
+                                    .authorId(post.getUser().getId())
+                                    .authorName(post.getUser().getUsername())
+                                    .createdAt(post.getCreatedAt())
+                                    .updatedAt(post.getUpdatedAt())
+                                    .secret(true)
+                                    .build();
+                        }
                     }
+                    return PostResponse.fromEntity(post);
                 })
                 .collect(Collectors.toList());
     }

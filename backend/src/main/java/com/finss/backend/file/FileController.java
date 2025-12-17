@@ -1,7 +1,9 @@
 package com.finss.backend.file;
 
+import com.finss.backend.common.AccessDeniedException;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +28,9 @@ public class FileController {
     @PostMapping("/upload")
     public FileResponse uploadFile(@RequestParam("file") MultipartFile file,
                                    @RequestParam(value = "postId", required = false) Long postId) {
+        // Authorization for upload is handled by the post creation/update process
+        // where userId is inherently available from the request or can be added if needed.
+        // For simplicity and given constraints, assuming user is authorized if they can create/edit the post.
         File uploadedFile = fileService.uploadFile(file, postId);
 
         String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
@@ -38,8 +43,10 @@ public class FileController {
     }
 
     @GetMapping("/{fileId}")
-    public ResponseEntity<Resource> downloadFile(@PathVariable Long fileId, HttpServletRequest request) {
-        Resource resource = fileService.downloadFile(fileId);
+    public ResponseEntity<Resource> downloadFile(@PathVariable Long fileId, HttpServletRequest request,
+                                               @RequestParam(required = false) Long currentUserId,
+                                               @RequestParam(defaultValue = "false") boolean isAdmin) {
+        Resource resource = fileService.downloadFile(fileId, currentUserId, isAdmin);
 
         String contentType = null;
         try {
@@ -60,8 +67,10 @@ public class FileController {
     }
 
     @GetMapping("/post/{postId}")
-    public List<FileResponse> getFilesByPostId(@PathVariable Long postId) {
-        return fileService.getFilesByPostId(postId).stream()
+    public List<FileResponse> getFilesByPostId(@PathVariable Long postId,
+                                               @RequestParam(required = false) Long currentUserId,
+                                               @RequestParam(defaultValue = "false") boolean isAdmin) {
+        return fileService.getFilesByPostId(postId, currentUserId, isAdmin).stream()
                 .map(file -> {
                     String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
                             .path("/api/files/")
@@ -74,8 +83,15 @@ public class FileController {
     }
 
     @DeleteMapping("/{fileId}")
-    public ResponseEntity<String> deleteFile(@PathVariable Long fileId) {
-        fileService.deleteFile(fileId);
+    public ResponseEntity<String> deleteFile(@PathVariable Long fileId,
+                                           @RequestParam(required = false) Long currentUserId,
+                                           @RequestParam(defaultValue = "false") boolean isAdmin) {
+        fileService.deleteFile(fileId, currentUserId, isAdmin);
         return ResponseEntity.ok("File deleted successfully.");
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<String> handleAccessDeniedException(AccessDeniedException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
     }
 }

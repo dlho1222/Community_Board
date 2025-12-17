@@ -4,9 +4,10 @@ import java.util.List;
 
 public interface PostService {
     PostResponse createPost(PostCreateRequest request);
-    PostResponse getPostById(Long id);
-    List<PostResponse> getAllPosts();
-    PostResponse updatePost(Long id, PostUpdateRequest request);
-    void deletePost(Long id);
-    List<PostResponse> searchPostsByTitle(String keyword);
+    // Modified methods to include authorization context
+    PostResponse getPostById(Long id, Long currentUserId, boolean isAdmin);
+    List<PostResponse> getAllPosts(Long currentUserId, boolean isAdmin);
+    PostResponse updatePost(Long id, PostUpdateRequest request, Long currentUserId, boolean isAdmin);
+    void deletePost(Long id, Long currentUserId, boolean isAdmin);
+    List<PostResponse> searchPostsByTitle(String keyword, Long currentUserId, boolean isAdmin);
 }

@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Container, Form, Button, Card, Alert, Spinner } from 'react-bootstrap';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
+import { Container, Form, Button, Card, Alert, Spinner, ListGroup } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
 import postApi from '../api/postApi';
-import type { PostCreateRequest, PostUpdateRequest, PostResponse } from '../api/postApi'; // Explicitly import types
+import type { PostCreateRequest, PostUpdateRequest } from '../api/postApi';
 import { AuthContext } from '../context/AuthContext';
-import { fileApi } from '../api/fileApi'; // Import fileApi
+import { fileApi } from '../api/fileApi';
+import type { FileResponse } from '../api/fileApi';
 
 const BoardWritePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,42 +16,87 @@ const BoardWritePage: React.FC = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [secret, setSecret] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null); // New state for files
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const [existingFiles, setExistingFiles] = useState<FileResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [initialLoading, setInitialLoading] = useState(true); // For fetching existing post data
+  const [initialLoading, setInitialLoading] = useState(true);
 
   if (!authContext) {
-    // This should ideally not happen if the component is wrapped in AuthProvider
     return <Container className="mt-4"><Alert variant="danger">Authentication context not found.</Alert></Container>;
   }
 
   const { user } = authContext;
+  const isAdmin = user?.username === 'admin';
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = 2;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  };
+
+  const fetchPostAndFiles = useCallback(async (currentUserId?: number, isAdmin?: boolean) => {
+    if (!id) {
+      setError('Post ID is missing.');
+      setInitialLoading(false);
+      return;
+    }
+    try {
+      setInitialLoading(true);
+      const postId = parseInt(id);
+      const post = await postApi.getPostById(postId, currentUserId, isAdmin);
+      setTitle(post.title);
+      setContent(post.content);
+      setSecret(post.secret);
+
+      const filesData = await fileApi.getFilesByPostId(postId, currentUserId, isAdmin);
+      setExistingFiles(filesData);
+    } catch (err: any) {
+      console.error('Failed to fetch post or files for editing:', err);
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Failed to load post or files for editing. No response from server.');
+      }
+    } finally {
+      setInitialLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => {
-    if (isEditing && id) {
-      const fetchPost = async () => {
-        try {
-          setInitialLoading(true);
-          const post = await postApi.getPostById(parseInt(id));
-          setTitle(post.title);
-          setContent(post.content);
-          setSecret(post.secret);
-        } catch (err) {
-          console.error('Failed to fetch post for editing:', err);
-          setError('Failed to load post for editing.');
-        } finally {
-          setInitialLoading(false);
-        }
-      };
-      fetchPost();
+    if (isEditing) {
+      fetchPostAndFiles(user?.id, isAdmin);
     } else {
       setInitialLoading(false);
     }
-  }, [isEditing, id]);
+  }, [isEditing, fetchPostAndFiles, user?.id, isAdmin]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedFiles(e.target.files);
+  };
+
+  const handleDeleteExistingFile = async (fileId: number) => {
+    if (!window.confirm('Are you sure you want to delete this file?')) {
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      await fileApi.deleteFile(fileId, user?.id, isAdmin);
+      setExistingFiles(existingFiles.filter(file => file.id !== fileId));
+    } catch (err: any) {
+      console.error('Failed to delete file:', err);
+      if (err.response) {
+        setError(err.response.data.message || 'Error deleting file.');
+      } else {
+        setError('Error deleting file. No response from server.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -68,7 +114,7 @@ const BoardWritePage: React.FC = () => {
       let postId: number;
       if (isEditing && id) {
         const updatedPost: PostUpdateRequest = { title, content, secret };
-        await postApi.updatePost(parseInt(id), updatedPost);
+        await postApi.updatePost(parseInt(id), updatedPost, user?.id, isAdmin); // Pass currentUserId and isAdmin
         postId = parseInt(id);
       } else {
         const newPost: PostCreateRequest = { title, content, userId: user.id, secret };
@@ -76,7 +122,6 @@ const BoardWritePage: React.FC = () => {
         postId = response.id;
       }
 
-      // Upload files if selected
       if (selectedFiles && selectedFiles.length > 0) {
         for (let i = 0; i < selectedFiles.length; i++) {
           await fileApi.uploadFile(selectedFiles[i], postId);
@@ -138,8 +183,29 @@ const BoardWritePage: React.FC = () => {
               />
             </Form.Group>
 
+            {isEditing && existingFiles.length > 0 && (
+              <Form.Group className="mb-3">
+                <Form.Label>첨부된 파일</Form.Label>
+                <ListGroup>
+                  {existingFiles.map((file) => (
+                    <ListGroup.Item key={file.id} className="d-flex justify-content-between align-items-center">
+                      <span>{file.fileName} ({formatFileSize(file.fileSize)})</span>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleDeleteExistingFile(file.id)}
+                        disabled={loading}
+                      >
+                        삭제
+                      </Button>
+                    </ListGroup.Item>
+                  ))}
+                </ListGroup>
+              </Form.Group>
+            )}
+
             <Form.Group controlId="formFile" className="mb-3">
-              <Form.Label>파일 첨부</Form.Label>
+              <Form.Label>파일 추가</Form.Label>
               <Form.Control type="file" multiple onChange={handleFileChange} disabled={loading} />
             </Form.Group>
 
