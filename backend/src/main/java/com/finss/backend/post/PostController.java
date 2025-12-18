@@ -4,11 +4,11 @@ import com.finss.backend.common.AccessDeniedException;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/posts")
@@ -28,11 +28,12 @@ public class PostController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PostResponse>> getAllPosts(
+    public ResponseEntity<Page<PostResponse>> getAllPosts(
             HttpSession session,
-            @RequestParam(defaultValue = "false") boolean isAdmin) {
+            @RequestParam(defaultValue = "false") boolean isAdmin,
+            Pageable pageable) { // Added Pageable parameter
         Long currentUserId = (Long) session.getAttribute("userId");
-        List<PostResponse> posts = postService.getAllPosts(currentUserId, isAdmin);
+        Page<PostResponse> posts = postService.getAllPosts(currentUserId, isAdmin, pageable); // Pass pageable
         return ResponseEntity.ok(posts);
     }
 
@@ -74,12 +75,13 @@ public class PostController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<PostResponse>> searchPostsByTitle(
+    public ResponseEntity<Page<PostResponse>> searchPostsByTitle( // Changed return type
             @RequestParam String keyword,
             HttpSession session,
-            @RequestParam(defaultValue = "false") boolean isAdmin) {
+            @RequestParam(defaultValue = "false") boolean isAdmin,
+            Pageable pageable) { // Added Pageable parameter
         Long currentUserId = (Long) session.getAttribute("userId");
-        List<PostResponse> posts = postService.searchPostsByTitle(keyword, currentUserId, isAdmin);
+        Page<PostResponse> posts = postService.searchPostsByTitle(keyword, currentUserId, isAdmin, pageable); // Pass pageable
         return ResponseEntity.ok(posts);
     }
 

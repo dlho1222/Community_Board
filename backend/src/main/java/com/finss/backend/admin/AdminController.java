@@ -6,6 +6,8 @@ import com.finss.backend.user.User;
 import com.finss.backend.user.UserResponse;
 import com.finss.backend.user.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -39,7 +41,8 @@ public class AdminController {
 
     // 게시글 전체 목록 조회
     @GetMapping("/posts")
-    public ResponseEntity<List<PostResponse>> getAllPostsForAdmin(@RequestHeader("X-USER-ID") Long adminId) {
+    public ResponseEntity<Page<PostResponse>> getAllPostsForAdmin(@RequestHeader("X-USER-ID") Long adminId,
+                                                                  Pageable pageable) { // Added Pageable parameter
         // 관리자 권한 확인
         User admin = userService.findById(adminId);
         if (!"ADMIN".equals(admin.getRole())) {
@@ -47,7 +50,7 @@ public class AdminController {
         }
 
         // `getAllPosts` with isAdmin=true will return all posts including secret ones
-        List<PostResponse> posts = postService.getAllPosts(adminId, true);
+        Page<PostResponse> posts = postService.getAllPosts(adminId, true, pageable); // Pass pageable
         return ResponseEntity.ok(posts);
     }
 

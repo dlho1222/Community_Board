@@ -1,20 +1,25 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Container, Table, Button, Alert, Spinner, Badge } from 'react-bootstrap';
+import { Container, Table, Button, Alert, Spinner, Badge, Pagination } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import adminApi from '../api/adminApi';
-import type { PostResponse } from '../api/postApi';
+import type { PostResponse, Page } from '../api/postApi'; // Import Page type
 
 const AdminPostManagementPage: React.FC = () => {
   const [posts, setPosts] = useState<PostResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [currentPage, setCurrentPage] = useState<number>(0); // 0-indexed page number
+  const [pageSize, setPageSize] = useState<number>(10); // Items per page
+  const [totalPages, setTotalPages] = useState<number>(0); // Total pages
+  const [totalElements, setTotalElements] = useState<number>(0); // Total elements across all pages
+
   const authContext = useContext(AuthContext);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchPosts = async () => {
+    const fetchPosts = async (page: number = currentPage, size: number = pageSize) => { // Added page/size params
       if (authContext?.user?.role !== 'ADMIN') {
         setError("Access Denied: You must be an administrator to view this page.");
         setLoading(false);
@@ -23,8 +28,11 @@ const AdminPostManagementPage: React.FC = () => {
       
       try {
         setLoading(true);
-        const allPosts = await adminApi.getAllPostsForAdmin(authContext.user.id);
-        setPosts(allPosts);
+        const pageData: Page<PostResponse> = await adminApi.getAllPostsForAdmin(authContext.user.id, page, size); // Pass page/size
+        setPosts(pageData.content);
+        setTotalPages(pageData.totalPages);
+        setCurrentPage(pageData.number);
+        setTotalElements(pageData.totalElements);
       } catch (err) {
         setError('Failed to fetch posts. Please try again later.');
         console.error(err);
@@ -34,12 +42,12 @@ const AdminPostManagementPage: React.FC = () => {
     };
 
     if (authContext?.user) {
-        fetchPosts();
+        fetchPosts(currentPage, pageSize); // Call with current page/size
     } else if (!authContext?.isAuthenticated) {
         setLoading(false);
         setError("You must be logged in to view this page.");
     }
-  }, [authContext?.user, authContext?.isAuthenticated]);
+  }, [authContext?.user, authContext?.isAuthenticated, currentPage, pageSize]); // Add currentPage/pageSize to dependencies
 
   const handleDelete = async (postId: number) => {
     if (!authContext?.user || !window.confirm(`Are you sure you want to delete post #${postId}?`)) {
@@ -48,13 +56,24 @@ const AdminPostManagementPage: React.FC = () => {
 
     try {
         await adminApi.deletePostByAdmin(authContext.user.id, postId);
-        // Refresh the list after deletion
-        setPosts(posts.filter(post => post.id !== postId));
+        // Refresh the list after deletion by re-fetching
+        // To ensure correct pagination, re-fetch the current page or adjust state carefully
+        // For simplicity, re-fetch the current page.
+        const pageData: Page<PostResponse> = await adminApi.getAllPostsForAdmin(authContext.user.id, currentPage, pageSize);
+        setPosts(pageData.content);
+        setTotalPages(pageData.totalPages);
+        setCurrentPage(pageData.number);
+        setTotalElements(pageData.totalElements);
     } catch (err) {
         alert('Failed to delete post.');
         console.error(err);
     }
   };
+
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
+
 
   if (loading) {
     return (
@@ -89,9 +108,9 @@ const AdminPostManagementPage: React.FC = () => {
           </tr>
         </thead>
         <tbody>
-          {posts.map((post) => (
+          {posts.map((post, index) => ( // Added index for numbering
             <tr key={post.id}>
-              <td>{post.id}</td>
+              <td>{totalElements - (currentPage * pageSize + index)}</td> {/* Global descending sequential numbering */}
               <td>{post.title}</td>
               <td>{post.authorName}</td>
               <td>{new Date(post.createdAt).toLocaleDateString()}</td>
@@ -106,6 +125,18 @@ const AdminPostManagementPage: React.FC = () => {
           ))}
         </tbody>
       </Table>
+
+      {totalPages > 1 && (
+        <Pagination className="justify-content-center mt-4">
+          <Pagination.Prev onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 0} />
+          {[...Array(totalPages)].map((_, i) => (
+            <Pagination.Item key={i} active={i === currentPage} onClick={() => handlePageChange(i)}>
+              {i + 1}
+            </Pagination.Item>
+          ))}
+          <Pagination.Next onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages - 1} />
+        </Pagination>
+      )}
     </Container>
   );
 };

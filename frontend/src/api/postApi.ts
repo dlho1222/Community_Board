@@ -26,8 +26,38 @@ export interface PostUpdateRequest {
     secret: boolean;
 }
 
+// Interface for Spring Data Page object
+export interface Page<T> {
+    content: T[];
+    pageable: {
+        sort: {
+            empty: boolean;
+            sorted: boolean;
+            unsorted: boolean;
+        };
+        offset: number;
+        pageNumber: number;
+        pageSize: number;
+        paged: boolean;
+        unpaged: boolean;
+    };
+    last: boolean;
+    totalPages: number;
+    totalElements: number;
+    size: number;
+    number: number;
+    sort: {
+        empty: boolean;
+        sorted: boolean;
+        unsorted: boolean;
+    };
+    first: boolean;
+    numberOfElements: number;
+    empty: boolean;
+}
+
 const postApi = {
-    getAllPosts: async (currentUserId?: number, isAdmin?: boolean): Promise<PostResponse[]> => {
+    getAllPosts: async (currentUserId?: number, isAdmin?: boolean, page: number = 0, size: number = 10): Promise<Page<PostResponse>> => {
         const params = new URLSearchParams();
         if (currentUserId !== undefined && currentUserId !== null && !isNaN(currentUserId)) {
             params.append('currentUserId', currentUserId.toString());
@@ -35,8 +65,11 @@ const postApi = {
         if (isAdmin === true) {
             params.append('isAdmin', 'true');
         }
+        params.append('page', page.toString());
+        params.append('size', size.toString());
+        params.append('sort', 'createdAt,desc'); // Default sort to newest first
 
-        const response = await api.get<PostResponse[]>(`/api/posts?${params.toString()}`);
+        const response = await api.get<Page<PostResponse>>(`/api/posts?${params.toString()}`);
         return response.data;
     },
 
@@ -83,7 +116,7 @@ const postApi = {
         await api.delete(`/api/posts/${id}?${params.toString()}`);
     },
 
-    searchPosts: async (keyword: string, currentUserId?: number, isAdmin?: boolean): Promise<PostResponse[]> => {
+    searchPosts: async (keyword: string, currentUserId?: number, isAdmin?: boolean, page: number = 0, size: number = 10): Promise<Page<PostResponse>> => {
         const params = new URLSearchParams();
         params.append('keyword', keyword);
         if (currentUserId !== undefined && currentUserId !== null && !isNaN(currentUserId)) {
@@ -92,8 +125,11 @@ const postApi = {
         if (isAdmin === true) {
             params.append('isAdmin', 'true');
         }
+        params.append('page', page.toString());
+        params.append('size', size.toString());
+        params.append('sort', 'createdAt,desc'); // Default sort to newest first
 
-        const response = await api.get<PostResponse[]>(`/api/posts/search?${params.toString()}`);
+        const response = await api.get<Page<PostResponse>>(`/api/posts/search?${params.toString()}`);
         return response.data;
     },
 };

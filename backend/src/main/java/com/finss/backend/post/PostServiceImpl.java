@@ -1,12 +1,13 @@
 package com.finss.backend.post;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import com.finss.backend.comment.CommentRepository; // Import CommentRepository
 import com.finss.backend.common.AccessDeniedException;
 import com.finss.backend.file.FileRepository; // Import FileRepository
 import com.finss.backend.user.User;
 import com.finss.backend.user.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Sort; // Import Sort
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,28 +59,26 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public List<PostResponse> getAllPosts(Long currentUserId, boolean isAdmin) {
-        List<Post> posts = postRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt")); // Sort by createdAt DESC
+    public Page<PostResponse> getAllPosts(Long currentUserId, boolean isAdmin, Pageable pageable) {
+        Page<Post> postsPage = postRepository.findAll(pageable); // Use findAll with Pageable
 
-        return posts.stream()
-                .map(post -> {
-                    if (post.isSecret()) {
-                        if (!isAdmin && (currentUserId == null || !currentUserId.equals(post.getUser().getId()))) {
-                            return PostResponse.builder()
-                                    .id(post.getId())
-                                    .title("비밀글입니다.")
-                                    .content("")
-                                    .authorId(post.getUser().getId())
-                                    .authorName(post.getUser().getUsername())
-                                    .createdAt(post.getCreatedAt())
-                                    .updatedAt(post.getUpdatedAt())
-                                    .secret(true)
-                                    .build();
-                        }
-                    }
-                    return PostResponse.fromEntity(post);
-                })
-                .collect(Collectors.toList());
+        return postsPage.map(post -> { // Use map on Page
+            if (post.isSecret()) {
+                if (!isAdmin && (currentUserId == null || !currentUserId.equals(post.getUser().getId()))) {
+                    return PostResponse.builder()
+                            .id(post.getId())
+                            .title("비밀글입니다.")
+                            .content("")
+                            .authorId(post.getUser().getId())
+                            .authorName(post.getUser().getUsername())
+                            .createdAt(post.getCreatedAt())
+                            .updatedAt(post.getUpdatedAt())
+                            .secret(true)
+                            .build();
+                }
+            }
+            return PostResponse.fromEntity(post);
+        });
     }
 
     @Override
@@ -119,28 +118,26 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PostResponse> searchPostsByTitle(String keyword, Long currentUserId, boolean isAdmin) {
-        List<Post> posts = postRepository.findByTitleContainingIgnoreCaseOrderByCreatedAtDesc(keyword);
+    public Page<PostResponse> searchPostsByTitle(String keyword, Long currentUserId, boolean isAdmin, Pageable pageable) {
+        Page<Post> postsPage = postRepository.findByTitleContainingIgnoreCase(keyword, pageable);
 
-        return posts.stream()
-                .map(post -> {
-                    if (post.isSecret()) {
-                        if (!isAdmin && (currentUserId == null || !currentUserId.equals(post.getUser().getId()))) {
-                            return PostResponse.builder()
-                                    .id(post.getId())
-                                    .title("비밀글입니다.")
-                                    .content("")
-                                    .authorId(post.getUser().getId())
-                                    .authorName(post.getUser().getUsername())
-                                    .createdAt(post.getCreatedAt())
-                                    .updatedAt(post.getUpdatedAt())
-                                    .secret(true)
-                                    .build();
-                        }
-                    }
-                    return PostResponse.fromEntity(post);
-                })
-                .collect(Collectors.toList());
+        return postsPage.map(post -> {
+            if (post.isSecret()) {
+                if (!isAdmin && (currentUserId == null || !currentUserId.equals(post.getUser().getId()))) {
+                    return PostResponse.builder()
+                            .id(post.getId())
+                            .title("비밀글입니다.")
+                            .content("")
+                            .authorId(post.getUser().getId())
+                            .authorName(post.getUser().getUsername())
+                            .createdAt(post.getCreatedAt())
+                            .updatedAt(post.getUpdatedAt())
+                            .secret(true)
+                            .build();
+                }
+            }
+            return PostResponse.fromEntity(post);
+        });
     }
 
     @Override

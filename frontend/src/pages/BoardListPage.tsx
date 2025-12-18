@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Container, Table, Button, Form, FormControl, InputGroup, Alert, Spinner } from 'react-bootstrap';
+import { Container, Table, Button, Form, FormControl, InputGroup, Alert, Spinner, Pagination } from 'react-bootstrap';
 import postApi from '../api/postApi';
-import type { PostResponse } from '../api/postApi'; // Explicitly import type only, if your TypeScript version supports it
+import type { PostResponse, Page } from '../api/postApi'; // Explicitly import type only, if your TypeScript version supports it
 import { AuthContext } from '../context/AuthContext'; // Import AuthContext
 
 import { useNavigate } from 'react-router-dom';
@@ -12,23 +12,30 @@ const BoardListPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>(''); // State for search input
+  const [currentPage, setCurrentPage] = useState<number>(0); // 0-indexed page number
+  const [pageSize, setPageSize] = useState<number>(10); // Items per page
+  const [totalPages, setTotalPages] = useState<number>(0); // Total pages
+  const [totalElements, setTotalElements] = useState<number>(0); // Total elements across all pages
   const navigate = useNavigate();
   const authContext = useContext(AuthContext);
 
   const { user } = authContext || { user: null }; // Default to null if context is not available
   const isAdmin = user?.role === 'ADMIN';
 
-  const fetchPosts = async (keyword?: string) => {
+  const fetchPosts = async (keyword?: string, page: number = currentPage, size: number = pageSize) => {
     try {
       setLoading(true);
       setError(null);
-      let data: PostResponse[];
+      let pageData: Page<PostResponse>;
       if (keyword && keyword.trim() !== '') {
-        data = await postApi.searchPosts(keyword, user?.id, isAdmin);
+        pageData = await postApi.searchPosts(keyword, user?.id, isAdmin, page, size);
       } else {
-        data = await postApi.getAllPosts(user?.id, isAdmin);
+        pageData = await postApi.getAllPosts(user?.id, isAdmin, page, size);
       }
-      setPosts(data);
+      setPosts(pageData.content);
+      setTotalPages(pageData.totalPages);
+      setCurrentPage(pageData.number); // Update current page based on response
+      setTotalElements(pageData.totalElements); // Set total elements
     } catch (err: any) {
       console.error('Failed to fetch posts:', err);
       if (err.response && err.response.data && err.response.data.message) {
@@ -42,8 +49,8 @@ const BoardListPage: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchPosts(); // Initial load of all posts
-  }, [user, isAdmin]); // Re-fetch posts if user context changes
+    fetchPosts(searchTerm, currentPage, pageSize); // Initial load of all posts
+  }, [user, isAdmin, currentPage, pageSize, searchTerm]); // Re-fetch posts if user context or page/size/searchTerm changes
 
   const handleWritePost = () => {
     navigate('/board/write');
@@ -55,8 +62,14 @@ const BoardListPage: React.FC = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchPosts(searchTerm);
+    setCurrentPage(0); // Reset to first page on new search
+    fetchPosts(searchTerm, 0, pageSize);
   };
+
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
+
 
   if (loading) {
     return (
@@ -108,7 +121,7 @@ const BoardListPage: React.FC = () => {
         <tbody>
           {posts.map((post, index) => (
             <tr key={post.id}>
-              <td>{posts.length - index}</td>
+              <td>{totalElements - (currentPage * pageSize + index)}</td> {/* Global descending sequential numbering */}
               <td><a href="#" onClick={(e) => { e.preventDefault(); handlePostClick(post.id); }}>
                 {post.secret ? '비밀글입니다.' : post.title}
                 </a>
@@ -120,7 +133,18 @@ const BoardListPage: React.FC = () => {
           ))}
         </tbody>
       </Table>
-      {/* Pagination will go here */}
+      
+      {totalPages > 1 && (
+        <Pagination className="justify-content-center mt-4">
+          <Pagination.Prev onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 0} />
+          {[...Array(totalPages)].map((_, i) => (
+            <Pagination.Item key={i} active={i === currentPage} onClick={() => handlePageChange(i)}>
+              {i + 1}
+            </Pagination.Item>
+          ))}
+          <Pagination.Next onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages - 1} />
+        </Pagination>
+      )}
     </Container>
   );
 };

@@ -1,7 +1,7 @@
 // frontend/src/api/adminApi.ts
 import api from './api';
 import type { User } from '../context/AuthContext';
-import type { PostResponse } from './postApi';
+import type { PostResponse, Page } from './postApi';
 import type { CommentResponse } from './commentApi';
 
 export interface AdminUserDetailResponse {
@@ -102,9 +102,14 @@ export const resetPasswordByAdmin = async (adminId: number, userId: number, newP
  * @param adminId - The ID of the administrator making the request.
  * @returns A promise that resolves to an array of PostResponse objects.
  */
-export const getAllPostsForAdmin = async (adminId: number): Promise<PostResponse[]> => {
+export const getAllPostsForAdmin = async (adminId: number, page: number = 0, size: number = 1000): Promise<Page<PostResponse>> => { // Added page/size params and changed return type
     try {
-        const response = await api.get<PostResponse[]>('/api/admin/posts', {
+        const params = new URLSearchParams();
+        params.append('page', page.toString());
+        params.append('size', size.toString());
+        params.append('sort', 'createdAt,desc'); // Default sort to newest first
+
+        const response = await api.get<Page<PostResponse>>(`/api/admin/posts?${params.toString()}`, { // Changed return type here
             headers: {
                 'X-USER-ID': adminId,
             },
