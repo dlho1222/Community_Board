@@ -2,10 +2,11 @@ import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import api from '../api/api';
 
 // Define the User type based on our backend User entity
-interface User {
+export interface User {
     id: number;
     username: string;
     email: string;
+    role: string;
     // Do not include password here for security
 }
 

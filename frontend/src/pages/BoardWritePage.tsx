@@ -27,7 +27,7 @@ const BoardWritePage: React.FC = () => {
   }
 
   const { user } = authContext;
-  const isAdmin = user?.username === 'admin';
+  const isAdmin = user?.role === 'ADMIN';
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';

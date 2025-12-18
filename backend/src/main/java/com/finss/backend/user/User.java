@@ -10,7 +10,7 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
-
+//DB와 맵핑
 @Getter
 @Setter
 @NoArgsConstructor
@@ -32,6 +32,9 @@ public class User {
 
     @Column(nullable = false, unique = true)
     private String email;
+
+    @Column(nullable = false)
+    private String role;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

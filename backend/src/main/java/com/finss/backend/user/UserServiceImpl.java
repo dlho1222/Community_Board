@@ -1,8 +1,11 @@
 package com.finss.backend.user;
 
+import com.finss.backend.admin.AdminPasswordResetRequest;
+import com.finss.backend.admin.AdminUserUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -24,10 +27,12 @@ public class UserServiceImpl implements UserService {
         }
 
         // 사용자 저장 (비밀번호는 암호화되지 않은 상태로 저장됨)
+        String role = "admin".equalsIgnoreCase(request.getUsername()) ? "ADMIN" : "USER";
         User newUser = User.builder()
                 .username(request.getUsername())
                 .password(request.getPassword())
                 .email(request.getEmail())
+                .role(role)
                 .build();
         userRepository.save(newUser);
     }
@@ -67,24 +72,45 @@ public class UserServiceImpl implements UserService {
             user.setPassword(request.getPassword());
         }
 
-                return userRepository.save(user);
+        return userRepository.save(user);
+    }
 
+    @Override
+    @Transactional(readOnly = true)
+    public User findById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<User> findAll() {
+        return userRepository.findAll();
+    }
+
+    @Override
+    public User adminUpdateUser(Long userId, AdminUserUpdateRequest request) {
+        User userToUpdate = findById(userId);
+
+        String newUsername = request.getUsername();
+        if (newUsername != null && !newUsername.trim().isEmpty() && !newUsername.equals(userToUpdate.getUsername())) {
+            // Check for duplicate username
+            if (userRepository.findByUsername(newUsername).isPresent()) {
+                throw new IllegalArgumentException("이미 사용 중인 사용자 이름입니다.");
             }
-
-        
-
-            @Override
-
-            @Transactional(readOnly = true)
-
-            public User findById(Long id) {
-
-                return userRepository.findById(id)
-
-                        .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-
-            }
-
+            userToUpdate.setUsername(newUsername);
         }
 
-        
+        return userRepository.save(userToUpdate);
+    }
+
+    @Override
+    public void resetPasswordByAdmin(Long userId, String newPassword) {
+        if (newPassword == null || newPassword.trim().isEmpty()) {
+            throw new IllegalArgumentException("새 비밀번호는 비어 있을 수 없습니다.");
+        }
+        User userToUpdate = findById(userId);
+        userToUpdate.setPassword(newPassword.trim());
+        userRepository.save(userToUpdate);
+    }
+}

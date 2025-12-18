@@ -31,6 +31,13 @@ const Header: React.FC = () => {
                         {isAuthenticated ? (
                             <NavDropdown title={`Welcome, ${user?.username}`} id="basic-nav-dropdown">
                                 <NavDropdown.Item as={Link} to="/profile">Profile</NavDropdown.Item>
+                                {user?.role === 'ADMIN' && (
+                                    <>
+                                        <NavDropdown.Divider />
+                                        <NavDropdown.Item as={Link} to="/admin/users">Admin User Management</NavDropdown.Item>
+                                        <NavDropdown.Item as={Link} to="/admin/posts">Admin Post Management</NavDropdown.Item>
+                                    </>
+                                )}
                                 <NavDropdown.Divider />
                                 <NavDropdown.Item onClick={handleLogout}>Logout</NavDropdown.Item>
                             </NavDropdown>

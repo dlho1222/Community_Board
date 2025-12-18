@@ -28,7 +28,7 @@ const BoardDetailPage: React.FC = () => {
 
   const { user } = authContext;
   const isAuthor = user && post && user.id === post.authorId;
-  const isAdmin = user?.username === 'admin'; // Use user from authContext, not post
+  const isAdmin = user?.role === 'ADMIN'; // Use user from authContext, not post
 
   // Function to format file size
   const formatFileSize = (bytes: number): string => {

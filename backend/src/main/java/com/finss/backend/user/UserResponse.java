@@ -15,6 +15,7 @@ public class UserResponse {
     private Long id;
     private String username;
     private String email;
+    private String role;
 
     // Static method to convert User entity to UserResponse DTO
     public static UserResponse fromEntity(User user) {
@@ -22,6 +23,7 @@ public class UserResponse {
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
+                .role(user.getRole())
                 .build();
     }
 }

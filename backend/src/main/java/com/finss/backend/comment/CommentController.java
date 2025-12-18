@@ -20,12 +20,13 @@ public class CommentController {
     @PostMapping
     public ResponseEntity<CommentResponse> createComment(
             @Valid @RequestBody CommentCreateRequest request,
-            HttpSession session) {
+            HttpSession session,
+            @RequestParam(defaultValue = "false") boolean isAdmin) {
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
             throw new AccessDeniedException("로그인이 필요합니다.");
         }
-        CommentResponse createdComment = commentService.createComment(request, userId);
+        CommentResponse createdComment = commentService.createComment(request, userId, isAdmin);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdComment);
     }
 

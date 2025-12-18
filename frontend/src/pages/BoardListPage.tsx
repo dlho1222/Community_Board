@@ -16,7 +16,7 @@ const BoardListPage: React.FC = () => {
   const authContext = useContext(AuthContext);
 
   const { user } = authContext || { user: null }; // Default to null if context is not available
-  const isAdmin = user?.username === 'admin';
+  const isAdmin = user?.role === 'ADMIN';
 
   const fetchPosts = async (keyword?: string) => {
     try {

@@ -27,10 +27,10 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    public CommentResponse createComment(CommentCreateRequest request, Long userId) {
+    public CommentResponse createComment(CommentCreateRequest request, Long userId, boolean isAdmin) {
         // First, check if the user is authorized to comment on the post
         // This call will throw AccessDeniedException if the post is secret and user is not authorized
-        postService.getPostById(request.getPostId(), userId, false);
+        postService.getPostById(request.getPostId(), userId, isAdmin);
 
         // Find User by ID using UserRepository
         User user = userRepository.findById(userId)
