@@ -7,15 +7,11 @@ import com.finss.backend.user.User;
 import com.finss.backend.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort; // Import Sort
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,15 +21,14 @@ public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
-    private final JdbcTemplate jdbcTemplate;
     private final CommentRepository commentRepository; // Inject CommentRepository
     private final FileRepository fileRepository; // Inject FileRepository
 
     @Override
     @Transactional
-    public PostResponse createPost(PostCreateRequest request) {
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + request.getUserId()));
+    public PostResponse createPost(PostCreateRequest request, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
 
         Post newPost = Post.builder()
                 .title(request.getTitle())
@@ -87,29 +82,6 @@ public class PostServiceImpl implements PostService {
                 .collect(Collectors.toList());
     }
 
-    private User mapRowToUser(ResultSet rs, int rowNum) throws SQLException {
-        return User.builder()
-                .id(rs.getLong("user_id"))
-                .username(rs.getString("username"))
-                .password(rs.getString("password"))
-                .email(rs.getString("email"))
-                .build();
-    }
-
-    private Post mapRowToPost(ResultSet rs, int rowNum) throws SQLException {
-        User user = mapRowToUser(rs, rowNum);
-
-        return Post.builder()
-                .id(rs.getLong("id"))
-                .title(rs.getString("title"))
-                .content(rs.getString("content"))
-                .secret(rs.getBoolean("is_secret"))
-                .user(user)
-                .createdAt(rs.getTimestamp("created_at").toLocalDateTime())
-                .updatedAt(rs.getTimestamp("updated_at").toLocalDateTime())
-                .build();
-    }
-
     @Override
     @Transactional
     public PostResponse updatePost(Long id, PostUpdateRequest request, Long currentUserId, boolean isAdmin) {
@@ -148,8 +120,7 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional(readOnly = true)
     public List<PostResponse> searchPostsByTitle(String keyword, Long currentUserId, boolean isAdmin) {
-        String searchSql = "SELECT p.id, p.title, p.content, p.is_secret, p.created_at, p.updated_at, u.id AS user_id, u.username, u.password, u.email FROM posts p JOIN users u ON p.user_id = u.id WHERE p.title LIKE '%" + keyword + "%' ORDER BY p.created_at DESC";
-        List<Post> posts = jdbcTemplate.query(searchSql, this::mapRowToPost);
+        List<Post> posts = postRepository.findByTitleContainingIgnoreCaseOrderByCreatedAtDesc(keyword);
 
         return posts.stream()
                 .map(post -> {

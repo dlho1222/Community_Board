@@ -17,6 +17,4 @@ public class PostCreateRequest {
     private String content;
 
     private boolean secret; // Renamed from isSecret
-
-    private Long userId;
 }

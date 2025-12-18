@@ -21,14 +21,13 @@ public class FileService {
 
     private final FileRepository fileRepository;
     private final FileStorageService fileStorageService;
-    private final PostService postService; // Keep PostService for authorization logic
-    private final PostRepository postRepository; // Inject PostRepository
+    private final PostService postService;
+    private final PostRepository postRepository;
 
     @Transactional
     public File uploadFile(MultipartFile file, Long postId) {
         String storedFileName = fileStorageService.storeFile(file);
 
-        // Retrieve Post entity for the relationship
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("Post not found with id: " + postId));
 
@@ -38,30 +37,26 @@ public class FileService {
                 .filePath(fileStorageService.getFileStorageLocation().resolve(storedFileName).toString())
                 .fileSize(file.getSize())
                 .fileType(file.getContentType())
-                .post(post) // Set Post entity
-                .uploadedAt(LocalDateTime.now()) // Handled by @CreationTimestamp
+                .post(post)
+                .uploadedAt(LocalDateTime.now())
                 .build();
 
-        return fileRepository.save(fileEntity); // Save and return the managed entity
+        return fileRepository.save(fileEntity);
     }
 
     public Resource downloadFile(Long fileId, Long currentUserId, boolean isAdmin) {
         File fileEntity = fileRepository.findById(fileId)
                 .orElseThrow(() -> new RuntimeException("File not found with id " + fileId));
 
-        // Authorize access to the parent post
-        // getPostById will throw AccessDeniedException if not authorized
         postService.getPostById(fileEntity.getPost().getId(), currentUserId, isAdmin);
 
         return fileStorageService.loadFileAsResource(fileEntity.getStoredFileName());
     }
 
     public List<File> getFilesByPostId(Long postId, Long currentUserId, boolean isAdmin) {
-        // Authorize access to the parent post
-        // getPostById will throw AccessDeniedException if not authorized
+
         postService.getPostById(postId, currentUserId, isAdmin);
 
-        // Use JPA repository method to find files by post ID
         return fileRepository.findByPost_Id(postId);
     }
 
@@ -70,7 +65,6 @@ public class FileService {
         File fileEntity = fileRepository.findById(fileId)
                 .orElseThrow(() -> new RuntimeException("File not found with id " + fileId));
 
-        // Authorize access to the parent post
         PostResponse postResponse = postService.getPostById(fileEntity.getPost().getId(), currentUserId, isAdmin);
 
         // Check if the current user is the author of the post or an admin to delete the file
@@ -96,6 +90,6 @@ public class FileService {
         for (File file : filesToDelete) {
             fileStorageService.deleteFile(file.getStoredFileName());
         }
-        fileRepository.deleteAll(filesToDelete); // Delete entities via JPA repository
+        fileRepository.deleteAll(filesToDelete);
     }
 }

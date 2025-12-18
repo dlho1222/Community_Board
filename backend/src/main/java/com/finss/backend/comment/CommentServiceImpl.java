@@ -20,21 +20,21 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class CommentServiceImpl implements CommentService {
 
-    private final CommentRepository commentRepository; // Inject CommentRepository
-    private final PostService postService; // Keep PostService for authorization logic
-    private final UserRepository userRepository; // Inject UserRepository
-    private final PostRepository postRepository; // Inject PostRepository
+    private final CommentRepository commentRepository;
+    private final PostService postService;
+    private final UserRepository userRepository;
+    private final PostRepository postRepository;
 
     @Override
     @Transactional
-    public CommentResponse createComment(CommentCreateRequest request, Long currentUserId, boolean isAdmin) {
+    public CommentResponse createComment(CommentCreateRequest request, Long userId) {
         // First, check if the user is authorized to comment on the post
         // This call will throw AccessDeniedException if the post is secret and user is not authorized
-        postService.getPostById(request.getPostId(), currentUserId, isAdmin);
+        postService.getPostById(request.getPostId(), userId, false);
 
         // Find User by ID using UserRepository
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + request.getUserId()));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
 
         // Find Post by ID using PostRepository
         Post post = postRepository.findById(request.getPostId())

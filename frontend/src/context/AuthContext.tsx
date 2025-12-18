@@ -26,39 +26,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
-        // Check localStorage for a logged-in user when the app loads
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
+        // Check the user's authentication status with the server when the app loads
+        const checkAuthStatus = async () => {
             try {
-                const parsedUser = JSON.parse(storedUser);
-                // Ensure id is a number for consistent type matching
-                const userWithNumberId = { ...parsedUser, id: Number(parsedUser.id) };
-                setUser(userWithNumberId);
-                console.log('AuthContext: User loaded from localStorage:', userWithNumberId);
-                console.log('AuthContext: User ID from localStorage:', userWithNumberId.id, 'Type:', typeof userWithNumberId.id);
-            } catch (e) {
-                console.error('AuthContext: Failed to parse user from localStorage', e);
-                localStorage.removeItem('user');
+                const response = await api.get<User>('/api/users/me');
+                if (response.status === 200 && response.data) {
+                    // If the server returns user data, the user is logged in
+                    login(response.data);
+                }
+            } catch (error) {
+                // If the request fails (e.g., 401 Unauthorized), the user is not logged in
+                setUser(null);
             }
-        }
+        };
+
+        checkAuthStatus();
     }, []);
 
     const login = (userData: User) => {
         // Ensure id is a number for consistent type matching
         const userWithNumberId = { ...userData, id: Number(userData.id) };
         setUser(userWithNumberId);
-        localStorage.setItem('user', JSON.stringify(userWithNumberId));
-        console.log('AuthContext: User data set by login function:', userWithNumberId);
-        console.log('AuthContext: User ID set by login function:', userWithNumberId.id, 'Type:', typeof userWithNumberId.id);
     };
 
     const logout = () => {
-        // Call the backend logout endpoint (optional, good practice)
-        api.post('/api/users/logout').catch(error => {
-            console.error("Logout failed", error);
+        // Call the backend logout endpoint
+        api.post('/api/users/logout').finally(() => {
+            // Always clear the user state on the client after attempting to log out
+            setUser(null);
         });
-        setUser(null);
-        localStorage.removeItem('user');
     };
 
     const isAuthenticated = !!user;

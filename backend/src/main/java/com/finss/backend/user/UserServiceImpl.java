@@ -1,22 +1,15 @@
 package com.finss.backend.user;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Optional;
-
 @Service
 @RequiredArgsConstructor
-@Transactional // Add @Transactional for methods that modify data
+@Transactional
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final JdbcTemplate jdbcTemplate; // Re-inject JdbcTemplate
 
     @Override
     public void register(UserRegisterRequest request) {
@@ -33,7 +26,7 @@ public class UserServiceImpl implements UserService {
         // 사용자 저장 (비밀번호는 암호화되지 않은 상태로 저장됨)
         User newUser = User.builder()
                 .username(request.getUsername())
-                .password(request.getPassword()) // TODO: 비밀번호 암호화 로직 추가 필요
+                .password(request.getPassword())
                 .email(request.getEmail())
                 .build();
         userRepository.save(newUser);
@@ -42,32 +35,14 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true) // Read-only transaction for login
     public User login(UserLoginRequest request) {
-        // Use JdbcTemplate for login to allow SQL injection practice
-        String findUserSql = "SELECT id, username, password, email FROM users WHERE email = ?";
-        List<User> users = jdbcTemplate.query(findUserSql, this::mapRowToUser, request.getEmail());
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
 
-        if (users.isEmpty()) {
-            throw new IllegalArgumentException("가입되지 않은 이메일입니다.");
-        }
-
-        User user = users.get(0);
-
-        // TODO: 비밀번호 암호화 및 비교 로직 추가 필요
         if (!user.getPassword().equals(request.getPassword())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
         return user;
-    }
-
-    // Helper method for JdbcTemplate mapping
-    private User mapRowToUser(ResultSet rs, int rowNum) throws SQLException {
-        return User.builder()
-                .id(rs.getLong("id"))
-                .username(rs.getString("username"))
-                .password(rs.getString("password"))
-                .email(rs.getString("email"))
-                .build();
     }
 
     @Override
@@ -92,6 +67,24 @@ public class UserServiceImpl implements UserService {
             user.setPassword(request.getPassword());
         }
 
-        return userRepository.save(user);
-    }
-}
+                return userRepository.save(user);
+
+            }
+
+        
+
+            @Override
+
+            @Transactional(readOnly = true)
+
+            public User findById(Long id) {
+
+                return userRepository.findById(id)
+
+                        .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+            }
+
+        }
+
+        

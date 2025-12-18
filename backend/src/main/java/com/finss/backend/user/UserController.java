@@ -1,5 +1,6 @@
 package com.finss.backend.user;
 
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,14 +21,15 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserResponse> loginUser(@Valid @RequestBody UserLoginRequest request) {
+    public ResponseEntity<UserResponse> loginUser(@Valid @RequestBody UserLoginRequest request, HttpSession session) {
         User user = userService.login(request);
+        session.setAttribute("userId", user.getId());
         return ResponseEntity.ok(UserResponse.fromEntity(user));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logoutUser() {
-        // TODO: 세션 기반 인증 시 로그아웃 처리 추가
+    public ResponseEntity<String> logoutUser(HttpSession session) {
+        session.invalidate();
         return ResponseEntity.ok("로그아웃 되었습니다.");
     }
 
@@ -35,6 +37,16 @@ public class UserController {
     public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @Valid @RequestBody UserUpdateRequest request) {
         User updatedUser = userService.update(id, request);
         return ResponseEntity.ok(UserResponse.fromEntity(updatedUser));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getMe(HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        User user = userService.findById(userId);
+        return ResponseEntity.ok(UserResponse.fromEntity(user));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
