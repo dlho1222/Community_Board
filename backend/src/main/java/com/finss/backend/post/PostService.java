@@ -9,4 +9,5 @@ public interface PostService {
     PostResponse updatePost(Long id, PostUpdateRequest request, Long currentUserId, boolean isAdmin);
     void deletePost(Long id, Long currentUserId, boolean isAdmin);
     List<PostResponse> searchPostsByTitle(String keyword, Long currentUserId, boolean isAdmin);
+    List<PostResponse> getPostsByUserId(Long userId, Long currentUserId, boolean isAdmin);
 }

@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Container, Table, Button, Alert, Spinner, Modal, Form } from 'react-bootstrap';
+import { Container, Table, Button, Alert, Spinner, Modal, Form, ListGroup, Card } from 'react-bootstrap';
 import { AuthContext } from '../context/AuthContext';
 import type { User } from '../context/AuthContext';
 import adminApi from '../api/adminApi';
+import type { AdminUserDetailResponse } from '../api/adminApi';
+import { useNavigate, Link } from 'react-router-dom';
 
 const AdminUserManagementPage: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -18,8 +20,15 @@ const AdminUserManagementPage: React.FC = () => {
   const [showResetModal, setShowResetModal] = useState(false);
   const [resettingUser, setResettingUser] = useState<User | null>(null);
   const [newPassword, setNewPassword] = useState('');
+
+  // State for the user details modal
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedUserDetail, setSelectedUserDetail] = useState<AdminUserDetailResponse | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [detailsError, setDetailsError] = useState<string | null>(null);
   
   const authContext = useContext(AuthContext);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -117,6 +126,31 @@ const AdminUserManagementPage: React.FC = () => {
     }
   };
 
+  const handleViewDetailsClick = async (user: User) => {
+    if (!authContext?.user || authContext.user.role !== 'ADMIN') {
+        setDetailsError("Access Denied: You must be an administrator to view user details.");
+        return;
+    }
+    setDetailsLoading(true);
+    setDetailsError(null);
+    try {
+        const details = await adminApi.getAdminUserDetails(authContext.user.id, user.id);
+        setSelectedUserDetail(details);
+        setShowDetailsModal(true);
+    } catch (err) {
+        setDetailsError('Failed to fetch user details.');
+        console.error(err);
+    } finally {
+        setDetailsLoading(false);
+    }
+  };
+
+  const handleDetailsClose = () => {
+    setShowDetailsModal(false);
+    setSelectedUserDetail(null);
+    setDetailsError(null);
+  };
+
 
   if (loading) {
     return (
@@ -158,8 +192,9 @@ const AdminUserManagementPage: React.FC = () => {
                 <td>{user.email}</td>
                 <td>{user.role}</td>
                 <td>
-                  <Button variant="info" size="sm" className="me-2" onClick={() => handleEditClick(user)}>Edit Username</Button>
-                  <Button variant="warning" size="sm" onClick={() => handleResetClick(user)}>Reset Password</Button>
+                  <Button variant="primary" size="sm" className="me-2" onClick={() => handleViewDetailsClick(user)} disabled={detailsLoading}>View Details</Button>
+                  <Button variant="info" size="sm" className="me-2" onClick={() => handleEditClick(user)} disabled={detailsLoading}>Edit Username</Button>
+                  <Button variant="warning" size="sm" onClick={() => handleResetClick(user)} disabled={detailsLoading}>Reset Password</Button>
                 </td>
               </tr>
             ))}
@@ -220,6 +255,70 @@ const AdminUserManagementPage: React.FC = () => {
           </Button>
           <Button variant="primary" onClick={handleResetPassword}>
             Confirm Reset
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* User Details Modal */}
+      <Modal show={showDetailsModal} onHide={handleDetailsClose} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>User Details: {selectedUserDetail?.user.username}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+            {detailsLoading && <div className="text-center"><Spinner animation="border" size="sm" /> Loading details...</div>}
+            {detailsError && <Alert variant="danger">{detailsError}</Alert>}
+            {selectedUserDetail && (
+                <div>
+                    <Card className="mb-3">
+                        <Card.Header>User Information</Card.Header>
+                        <ListGroup variant="flush">
+                            <ListGroup.Item>ID: {selectedUserDetail.user.id}</ListGroup.Item>
+                            <ListGroup.Item>Username: {selectedUserDetail.user.username}</ListGroup.Item>
+                            <ListGroup.Item>Email: {selectedUserDetail.user.email}</ListGroup.Item>
+                            <ListGroup.Item>Role: {selectedUserDetail.user.role}</ListGroup.Item>
+                        </ListGroup>
+                    </Card>
+
+                    <Card className="mb-3">
+                        <Card.Header>Posts by {selectedUserDetail.user.username}</Card.Header>
+                        {selectedUserDetail.posts.length > 0 ? (
+                            <ListGroup variant="flush">
+                                {selectedUserDetail.posts.map(post => (
+                                    <ListGroup.Item key={post.id}>
+                                        <Link to={`/board/${post.id}`} onClick={handleDetailsClose}>
+                                            {post.title} {post.secret && '(비밀글)'}
+                                        </Link>
+                                    </ListGroup.Item>
+                                ))}
+                            </ListGroup>
+                        ) : (
+                            <Card.Body>No posts found.</Card.Body>
+                        )}
+                    </Card>
+
+                    <Card>
+                        <Card.Header>Comments by {selectedUserDetail.user.username}</Card.Header>
+                        {selectedUserDetail.comments.length > 0 ? (
+                            <ListGroup variant="flush">
+                                {selectedUserDetail.comments.map(comment => (
+                                    <ListGroup.Item key={comment.id}>
+                                        <Link to={`/board/${comment.postId}`} onClick={handleDetailsClose}>
+                                            {comment.content.substring(0, 50)}...
+                                            <small className="text-muted ms-2"> (on Post ID: {comment.postId})</small>
+                                        </Link>
+                                    </ListGroup.Item>
+                                ))}
+                            </ListGroup>
+                        ) : (
+                            <Card.Body>No comments found.</Card.Body>
+                        )}
+                    </Card>
+                </div>
+            )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleDetailsClose}>
+            Close
           </Button>
         </Modal.Footer>
       </Modal>

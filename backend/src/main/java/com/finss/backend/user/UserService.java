@@ -1,6 +1,8 @@
 package com.finss.backend.user;
 
+import com.finss.backend.admin.AdminUserDetailResponse;
 import com.finss.backend.admin.AdminUserUpdateRequest;
+
 import java.util.List;
 
 public interface UserService {
@@ -12,4 +14,5 @@ public interface UserService {
     List<User> findAll();
     User adminUpdateUser(Long userId, AdminUserUpdateRequest request);
     void resetPasswordByAdmin(Long userId, String newPassword);
+    AdminUserDetailResponse getAdminUserDetails(Long userId, Long adminId);
 }

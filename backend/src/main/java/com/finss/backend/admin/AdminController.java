@@ -95,4 +95,18 @@ public class AdminController {
         userService.resetPasswordByAdmin(userId, request.getNewPassword());
         return ResponseEntity.ok("비밀번호가 성공적으로 재설정되었습니다.");
     }
+
+    // 사용자 상세 정보 조회
+    @GetMapping("/users/{userId}/details")
+    public ResponseEntity<AdminUserDetailResponse> getUserDetailsByAdmin(@RequestHeader("X-USER-ID") Long adminId,
+                                                                         @PathVariable Long userId) {
+        // 관리자 권한 확인
+        User admin = userService.findById(adminId);
+        if (!"ADMIN".equals(admin.getRole())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        AdminUserDetailResponse details = userService.getAdminUserDetails(userId, adminId);
+        return ResponseEntity.ok(details);
+    }
 }

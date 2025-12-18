@@ -97,4 +97,24 @@ public class CommentServiceImpl implements CommentService {
         
         commentRepository.delete(comment);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CommentResponse> getCommentsByUserId(Long userId, Long currentUserId, boolean isAdmin) {
+        List<Comment> comments = commentRepository.findByUserIdOrderByCreatedAtDesc(userId);
+
+        return comments.stream()
+                .map(comment -> {
+                    try {
+                        // Check if the current user (admin) has access to the parent post
+                        postService.getPostById(comment.getPost().getId(), currentUserId, isAdmin);
+                        return CommentResponse.fromEntity(comment);
+                    } catch (AccessDeniedException | IllegalArgumentException e) {
+                        // If parent post is inaccessible or not found, filter out this comment
+                        return null;
+                    }
+                })
+                .filter(java.util.Objects::nonNull) // Filter out nulls (inaccessible comments)
+                .collect(Collectors.toList());
+    }
 }

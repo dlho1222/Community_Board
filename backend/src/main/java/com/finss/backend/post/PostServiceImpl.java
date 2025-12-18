@@ -142,4 +142,30 @@ public class PostServiceImpl implements PostService {
                 })
                 .collect(Collectors.toList());
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PostResponse> getPostsByUserId(Long userId, Long currentUserId, boolean isAdmin) {
+        List<Post> posts = postRepository.findByUserIdOrderByCreatedAtDesc(userId);
+
+        return posts.stream()
+                .map(post -> {
+                    if (post.isSecret()) {
+                        if (!isAdmin && (currentUserId == null || !currentUserId.equals(post.getUser().getId()))) {
+                            return PostResponse.builder()
+                                    .id(post.getId())
+                                    .title("비밀글입니다.")
+                                    .content("")
+                                    .authorId(post.getUser().getId())
+                                    .authorName(post.getUser().getUsername())
+                                    .createdAt(post.getCreatedAt())
+                                    .updatedAt(post.getUpdatedAt())
+                                    .secret(true)
+                                    .build();
+                        }
+                    }
+                    return PostResponse.fromEntity(post);
+                })
+                .collect(Collectors.toList());
+    }
 }

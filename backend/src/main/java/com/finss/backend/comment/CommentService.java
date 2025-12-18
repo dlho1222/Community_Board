@@ -7,4 +7,5 @@ public interface CommentService {
     List<CommentResponse> getCommentsByPostId(Long postId, Long currentUserId, boolean isAdmin);
     CommentResponse updateComment(Long id, String content); // Leaving as is for now
     void deleteComment(Long id, Long currentUserId, boolean isAdmin);
+    List<CommentResponse> getCommentsByUserId(Long userId, Long currentUserId, boolean isAdmin);
 }

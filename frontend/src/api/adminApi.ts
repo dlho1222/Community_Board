@@ -1,6 +1,14 @@
 // frontend/src/api/adminApi.ts
 import api from './api';
 import type { User } from '../context/AuthContext';
+import type { PostResponse } from './postApi';
+import type { CommentResponse } from './commentApi';
+
+export interface AdminUserDetailResponse {
+    user: User;
+    posts: PostResponse[];
+    comments: CommentResponse[];
+}
 
 /**
  * Fetches all users from the admin endpoint.
@@ -19,6 +27,26 @@ export const getAllUsers = async (adminId: number): Promise<User[]> => {
     } catch (error) {
         console.error("Error fetching all users:", error);
         // It's often better to let the calling component handle the error UI
+        throw error;
+    }
+};
+
+/**
+ * Fetches detailed information for a specific user as an admin.
+ * @param adminId - The ID of the administrator making the request.
+ * @param userId - The ID of the user to fetch details for.
+ * @returns A promise that resolves to an AdminUserDetailResponse object.
+ */
+export const getAdminUserDetails = async (adminId: number, userId: number): Promise<AdminUserDetailResponse> => {
+    try {
+        const response = await api.get<AdminUserDetailResponse>(`/api/admin/users/${userId}/details`, {
+            headers: {
+                'X-USER-ID': adminId,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error(`Error fetching user details for user ${userId}:`, error);
         throw error;
     }
 };
@@ -109,6 +137,7 @@ export const deletePostByAdmin = async (adminId: number, postId: number): Promis
 
 const adminApi = {
     getAllUsers,
+    getAdminUserDetails,
     updateUserByAdmin,
     resetPasswordByAdmin,
     getAllPostsForAdmin,

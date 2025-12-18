@@ -2,6 +2,11 @@ package com.finss.backend.user;
 
 import com.finss.backend.admin.AdminPasswordResetRequest;
 import com.finss.backend.admin.AdminUserUpdateRequest;
+import com.finss.backend.admin.AdminUserDetailResponse;
+import com.finss.backend.post.PostService;
+import com.finss.backend.post.PostResponse; // Added
+import com.finss.backend.comment.CommentService;
+import com.finss.backend.comment.CommentResponse; // Added
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +18,8 @@ import java.util.List;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final PostService postService;
+    private final CommentService commentService;
 
     @Override
     public void register(UserRegisterRequest request) {
@@ -112,5 +119,21 @@ public class UserServiceImpl implements UserService {
         User userToUpdate = findById(userId);
         userToUpdate.setPassword(newPassword.trim());
         userRepository.save(userToUpdate);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AdminUserDetailResponse getAdminUserDetails(Long userId, Long adminId) {
+        User user = findById(userId); // Use existing findById to get the user details
+
+        // Get posts and comments by the user, using adminId to check access
+        List<PostResponse> posts = postService.getPostsByUserId(userId, adminId, true);
+        List<CommentResponse> comments = commentService.getCommentsByUserId(userId, adminId, true);
+
+        return AdminUserDetailResponse.builder()
+                .user(UserResponse.fromEntity(user))
+                .posts(posts)
+                .comments(comments)
+                .build();
     }
 }
