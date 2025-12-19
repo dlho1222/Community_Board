@@ -1,0 +1,22 @@
+[Unit]
+Description=Community Board Spring Boot Backend
+After=network.target mysql.service
+
+[Service]
+User=ubuntu
+WorkingDirectory=/opt/community_board_backend
+ExecStart=/usr/bin/java -jar /opt/community_board_backend/backend-0.0.1-SNAPSHOT.jar
+
+SuccessExitStatus=143
+Restart=always
+RestartSec=10
+
+Environment="DB_HOST=localhost"
+Environment="DB_PORT=3306"
+Environment="DB_DATABASE=community_board_db"
+Environment="DB_USERNAME=board_admin"
+Environment="DB_PASSWORD=1234"
+Environment="FILE_UPLOAD_DIR=/opt/community_board/uploads"
+
+[Install]
+WantedBy=multi-user.target

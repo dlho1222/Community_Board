@@ -11,7 +11,7 @@ const AdminPostManagementPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [currentPage, setCurrentPage] = useState<number>(0); // 0-indexed page number
-  const [pageSize, setPageSize] = useState<number>(10); // Items per page
+  const [pageSize] = useState<number>(10); // Items per page
   const [totalPages, setTotalPages] = useState<number>(0); // Total pages
   const [totalElements, setTotalElements] = useState<number>(0); // Total elements across all pages
 

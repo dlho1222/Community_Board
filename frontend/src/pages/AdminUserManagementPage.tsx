@@ -28,8 +28,7 @@ const AdminUserManagementPage: React.FC = () => {
   const [detailsError, setDetailsError] = useState<string | null>(null);
   
   const authContext = useContext(AuthContext);
-  const navigate = useNavigate();
-
+  useNavigate();
   useEffect(() => {
     const fetchUsers = async () => {
       if (authContext?.user?.role !== 'ADMIN') {
