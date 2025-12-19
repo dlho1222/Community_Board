@@ -11,11 +11,9 @@ SuccessExitStatus=143
 Restart=always
 RestartSec=10
 
-Environment="DB_HOST=localhost"
-Environment="DB_PORT=3306"
-Environment="DB_DATABASE=community_board_db"
-Environment="DB_USERNAME=board_admin"
-Environment="DB_PASSWORD=1234"
+Environment="SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/community_board_db?serverTimezone=Asia/Seoul&characterEncoding=UTF-8"
+Environment="SPRING_DATASOURCE_USERNAME=board_admin"
+Environment="SPRING_DATASOURCE_PASSWORD=1234"
 Environment="FILE_UPLOAD_DIR=/opt/community_board/uploads"
 
 [Install]
