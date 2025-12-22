@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import jakarta.servlet.http.HttpServletRequest;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,9 +29,7 @@ public class FileController {
     @PostMapping("/upload")
     public FileResponse uploadFile(@RequestParam("file") MultipartFile file,
                                    @RequestParam(value = "postId", required = false) Long postId) {
-        // Authorization for upload is handled by the post creation/update process
-        // where userId is inherently available from the request or can be added if needed.
-        // For simplicity and given constraints, assuming user is authorized if they can create/edit the post.
+
         File uploadedFile = fileService.uploadFile(file, postId);
 
         String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
@@ -44,19 +43,19 @@ public class FileController {
 
     @GetMapping("/{fileId}")
     public ResponseEntity<Resource> downloadFile(@PathVariable Long fileId, HttpServletRequest request,
-                                               @RequestParam(required = false) Long currentUserId,
-                                               @RequestParam(defaultValue = "false") boolean isAdmin) {
+                                                 @RequestParam(required = false) Long currentUserId,
+                                                 @RequestParam(defaultValue = "false") boolean isAdmin) {
         Resource resource = fileService.downloadFile(fileId, currentUserId, isAdmin);
 
         String contentType = null;
         try {
             contentType = request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());
         } catch (IOException ex) {
-            // Fallback to the default content type if type could not be determined
+
             contentType = "application/octet-stream";
         }
 
-        if(contentType == null) {
+        if (contentType == null) {
             contentType = "application/octet-stream";
         }
 
@@ -84,8 +83,8 @@ public class FileController {
 
     @DeleteMapping("/{fileId}")
     public ResponseEntity<String> deleteFile(@PathVariable Long fileId,
-                                           @RequestParam(required = false) Long currentUserId,
-                                           @RequestParam(defaultValue = "false") boolean isAdmin) {
+                                             @RequestParam(required = false) Long currentUserId,
+                                             @RequestParam(defaultValue = "false") boolean isAdmin) {
         fileService.deleteFile(fileId, currentUserId, isAdmin);
         return ResponseEntity.ok("File deleted successfully.");
     }

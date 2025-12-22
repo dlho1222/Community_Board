@@ -15,7 +15,6 @@ public class FileResponse {
         this.fileSize = fileSize;
     }
 
-    // Getters
     public Long getId() {
         return id;
     }

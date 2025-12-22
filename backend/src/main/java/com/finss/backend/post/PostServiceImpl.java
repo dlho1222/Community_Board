@@ -22,8 +22,8 @@ public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
-    private final CommentRepository commentRepository; // Inject CommentRepository
-    private final FileRepository fileRepository; // Inject FileRepository
+    private final CommentRepository commentRepository;
+    private final FileRepository fileRepository;
 
     @Override
     @Transactional
@@ -60,9 +60,9 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public Page<PostResponse> getAllPosts(Long currentUserId, boolean isAdmin, Pageable pageable) {
-        Page<Post> postsPage = postRepository.findAll(pageable); // Use findAll with Pageable
+        Page<Post> postsPage = postRepository.findAll(pageable);
 
-        return postsPage.map(post -> { // Use map on Page
+        return postsPage.map(post -> {
             if (post.isSecret()) {
                 if (!isAdmin && (currentUserId == null || !currentUserId.equals(post.getUser().getId()))) {
                     return PostResponse.builder()
@@ -109,7 +109,6 @@ public class PostServiceImpl implements PostService {
             throw new AccessDeniedException("게시글을 삭제할 권한이 없습니다.");
         }
 
-        // Delete associated files and comments first
         fileRepository.deleteAllByPost_Id(id);
         commentRepository.deleteAllByPost_Id(id);
 

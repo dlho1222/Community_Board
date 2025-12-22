@@ -13,19 +13,21 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime; // Use LocalDateTime
 import java.util.List;
-
+//File관련된 비지니스 로직 처리
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class FileService {
 
     private final FileRepository fileRepository;
+    //실제 파일 입출력 로직 전담
     private final FileStorageService fileStorageService;
     private final PostService postService;
     private final PostRepository postRepository;
 
     @Transactional
     public File uploadFile(MultipartFile file, Long postId) {
+        //입출력 작업 필요시 FileStorageService에 위임
         String storedFileName = fileStorageService.storeFile(file);
 
         Post post = postRepository.findById(postId)
@@ -67,29 +69,12 @@ public class FileService {
 
         PostResponse postResponse = postService.getPostById(fileEntity.getPost().getId(), currentUserId, isAdmin);
 
-        // Check if the current user is the author of the post or an admin to delete the file
         if (!isAdmin && (currentUserId == null || !currentUserId.equals(postResponse.getAuthorId()))) {
             throw new AccessDeniedException("파일을 삭제할 권한이 없습니다.");
         }
 
         fileStorageService.deleteFile(fileEntity.getStoredFileName());
-        fileRepository.delete(fileEntity); // Delete entity via JPA repository
+        fileRepository.delete(fileEntity);
     }
 
-    @Transactional
-    public void deleteFilesByPostId(Long postId, Long currentUserId, boolean isAdmin) {
-        // Authorize access to the parent post
-        PostResponse postResponse = postService.getPostById(postId, currentUserId, isAdmin);
-
-        // Check if the current user is the author of the post or an admin to delete files
-        if (!isAdmin && (currentUserId == null || !currentUserId.equals(postResponse.getAuthorId()))) {
-            throw new AccessDeniedException("이 게시글의 파일을 삭제할 권한이 없습니다.");
-        }
-
-        List<File> filesToDelete = fileRepository.findByPost_Id(postId);
-        for (File file : filesToDelete) {
-            fileStorageService.deleteFile(file.getStoredFileName());
-        }
-        fileRepository.deleteAll(filesToDelete);
-    }
 }

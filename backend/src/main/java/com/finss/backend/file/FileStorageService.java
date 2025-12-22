@@ -15,6 +15,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Objects;
 import java.util.UUID;
 
+//I/O 작업을 담당하는 클래스
 @Service
 public class FileStorageService {
 
@@ -30,17 +31,15 @@ public class FileStorageService {
     }
 
     public String storeFile(MultipartFile file) {
-        // Normalize file name
+        //고유한 파일 이름 생성: UUID.randomUUID()를 사용하여 전송된 파일의 원래 이름 앞에 고유한 ID를 붙입니다. 이는 다른 사용자가 같은 이름의 파일을 업로드하더라도 파일이 덮어써지는 것을 방지합니다.
         String originalFileName = Objects.requireNonNull(file.getOriginalFilename());
         String fileName = UUID.randomUUID().toString() + "_" + originalFileName.replaceAll("\\s+", "_");
-
+        //디렉토리 트래버설 공격방지
         try {
-            // Check if the file's name contains invalid characters
             if (fileName.contains("..")) {
                 throw new RuntimeException("Sorry! Filename contains invalid path sequence " + fileName);
             }
 
-            // Copy file to the target location (Replacing existing file with same name)
             Path targetLocation = this.fileStorageLocation.resolve(fileName);
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
@@ -49,15 +48,14 @@ public class FileStorageService {
             throw new RuntimeException("Could not store file " + fileName + ". Please try again!", ex);
         }
     }
-
+    //fineName을 받아 해당 파일의 전체 경로 계산, UrlResource로 파일을 Spring Resource객체로 로드 -> 파일 내용을 스트림 형태로 쉽게 다룰 수 있게 해주는 객체
     public Resource loadFileAsResource(String fileName) {
         try {
             Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
             Resource resource = new UrlResource(filePath.toUri());
             if (resource.exists()) {
                 return resource;
-            }
- else {
+            } else {
                 throw new RuntimeException("File not found " + fileName);
             }
         } catch (MalformedURLException ex) {
@@ -65,6 +63,7 @@ public class FileStorageService {
         }
     }
 
+    //파일 이름을 받아 디스크에서 해당 파일을 Files.deleteIfExists()를 통해 물리적으로 삭제
     public boolean deleteFile(String fileName) {
         try {
             Path filePath = this.fileStorageLocation.resolve(fileName).normalize();

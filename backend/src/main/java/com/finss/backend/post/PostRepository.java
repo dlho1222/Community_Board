@@ -7,6 +7,5 @@ import java.util.List;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
     Page<Post> findByTitleContainingIgnoreCase(String keyword, Pageable pageable);
-    // findAll(Pageable pageable) is already implicitly available from JpaRepository
     List<Post> findByUserIdOrderByCreatedAtDesc(Long userId);
 }

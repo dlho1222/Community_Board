@@ -42,7 +42,6 @@ public class CommentController {
 
     @PutMapping("/{id}")
     public ResponseEntity<CommentResponse> updateComment(@PathVariable Long id, @RequestBody String content) {
-        // In a real application, you might want a DTO for update with validation
         CommentResponse updatedComment = commentService.updateComment(id, content);
         return ResponseEntity.ok(updatedComment);
     }

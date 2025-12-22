@@ -28,39 +28,32 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional
     public CommentResponse createComment(CommentCreateRequest request, Long userId, boolean isAdmin) {
-        // First, check if the user is authorized to comment on the post
-        // This call will throw AccessDeniedException if the post is secret and user is not authorized
+
         postService.getPostById(request.getPostId(), userId, isAdmin);
 
-        // Find User by ID using UserRepository
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
 
-        // Find Post by ID using PostRepository
         Post post = postRepository.findById(request.getPostId())
                 .orElseThrow(() -> new IllegalArgumentException("Post not found with id: " + request.getPostId()));
 
-        // Create Comment entity
         Comment newComment = Comment.builder()
                 .content(request.getContent())
                 .user(user)
                 .post(post)
-                .createdAt(LocalDateTime.now()) // Handled by @CreationTimestamp
-                .updatedAt(LocalDateTime.now()) // Handled by @UpdateTimestamp
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
 
-        // Save Comment using CommentRepository
         Comment savedComment = commentRepository.save(newComment);
         return CommentResponse.fromEntity(savedComment);
     }
 
     @Override
     public List<CommentResponse> getCommentsByPostId(Long postId, Long currentUserId, boolean isAdmin) {
-        // First, check if the user is authorized to view the post and its comments
-        // This call will throw AccessDeniedException if the post is secret and user is not authorized
         postService.getPostById(postId, currentUserId, isAdmin);
 
-        List<Comment> comments = commentRepository.findByPost_Id(postId); // Use JPA custom query method
+        List<Comment> comments = commentRepository.findByPost_Id(postId);
 
         return comments.stream()
                 .map(CommentResponse::fromEntity)
@@ -74,7 +67,6 @@ public class CommentServiceImpl implements CommentService {
                 .orElseThrow(() -> new IllegalArgumentException("Comment not found with id: " + id));
 
         existingComment.setContent(content);
-        // updatedAt is handled by @UpdateTimestamp
 
         Comment updatedComment = commentRepository.save(existingComment);
         return CommentResponse.fromEntity(updatedComment);
@@ -86,15 +78,13 @@ public class CommentServiceImpl implements CommentService {
         Comment comment = commentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Comment not found with id: " + id));
 
-        // Authorize access to the parent post and check comment ownership
-        PostResponse postResponse = postService.getPostById(comment.getPost().getId(), currentUserId, isAdmin); // This will throw AccessDeniedException if post is secret and user is not authorized
+        PostResponse postResponse = postService.getPostById(comment.getPost().getId(), currentUserId, isAdmin);
 
-        // Check if current user is comment author, post author, or admin
         if (!isAdmin && (currentUserId == null ||
                 (!currentUserId.equals(comment.getUser().getId()) && !currentUserId.equals(postResponse.getAuthorId())))) {
             throw new AccessDeniedException("댓글을 삭제할 권한이 없습니다.");
         }
-        
+
         commentRepository.delete(comment);
     }
 
@@ -106,15 +96,13 @@ public class CommentServiceImpl implements CommentService {
         return comments.stream()
                 .map(comment -> {
                     try {
-                        // Check if the current user (admin) has access to the parent post
                         postService.getPostById(comment.getPost().getId(), currentUserId, isAdmin);
                         return CommentResponse.fromEntity(comment);
                     } catch (AccessDeniedException | IllegalArgumentException e) {
-                        // If parent post is inaccessible or not found, filter out this comment
                         return null;
                     }
                 })
-                .filter(java.util.Objects::nonNull) // Filter out nulls (inaccessible comments)
+                .filter(java.util.Objects::nonNull)
                 .collect(Collectors.toList());
     }
 }
