@@ -3,7 +3,7 @@ package com.finss.backend.user;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
-
+//DTO
 @Getter
 @Setter
 public class UserUpdateRequest {

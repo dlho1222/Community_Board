@@ -6,7 +6,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+/*
+    @Valid - `@Size`, `@NotBlank` 같은 유효성 검사 어노테이션의 조건들을 모두 만족하는지 `@Valid` 어노테이션으로 검증
+    @ReequstBody - UserRegisterReqesut.java -> DTO 변환, 역직렬화 어노테이션
+    Mapping 어노테이션 - @GetMapping -> GET 요청 처리
+*/
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor

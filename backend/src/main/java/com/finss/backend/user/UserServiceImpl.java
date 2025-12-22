@@ -1,20 +1,20 @@
 package com.finss.backend.user;
 
-import com.finss.backend.admin.AdminPasswordResetRequest;
-import com.finss.backend.admin.AdminUserUpdateRequest;
 import com.finss.backend.admin.AdminUserDetailResponse;
-import com.finss.backend.post.PostService;
-import com.finss.backend.post.PostResponse; // Added
+import com.finss.backend.admin.AdminUserUpdateRequest;
+import com.finss.backend.comment.CommentResponse;
 import com.finss.backend.comment.CommentService;
-import com.finss.backend.comment.CommentResponse; // Added
+import com.finss.backend.post.PostResponse;
+import com.finss.backend.post.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
-@Transactional
+@RequiredArgsConstructor //DI
+@Transactional //실행 중에 트랜잭션에 오류가 발생되면 트랜잭션이 '롤백'되고 변경 사항이 모두 취소, 성공하면 커밋
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
@@ -23,17 +23,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void register(UserRegisterRequest request) {
-        // 사용자 이름 중복 확인
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new IllegalArgumentException("이미 사용 중인 사용자 이름입니다.");
         }
 
-        // 이메일 중복 확인
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
 
-        // 사용자 저장 (비밀번호는 암호화되지 않은 상태로 저장됨)
         String role = "admin".equalsIgnoreCase(request.getUsername()) ? "ADMIN" : "USER";
         User newUser = User.builder()
                 .username(request.getUsername())
@@ -45,7 +42,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional(readOnly = true) // Read-only transaction for login
+    @Transactional(readOnly = true)
     public User login(UserLoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
@@ -62,10 +59,8 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        // Update username if provided and different
         if (request.getUsername() != null && !request.getUsername().trim().isEmpty()) {
             if (!user.getUsername().equals(request.getUsername())) {
-                // Check for duplicate username
                 if (userRepository.findByUsername(request.getUsername()).isPresent()) {
                     throw new IllegalArgumentException("이미 사용 중인 사용자 이름입니다.");
                 }
@@ -73,7 +68,6 @@ public class UserServiceImpl implements UserService {
             }
         }
 
-        // Update password if provided
         if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
 
             user.setPassword(request.getPassword());
@@ -101,7 +95,6 @@ public class UserServiceImpl implements UserService {
 
         String newUsername = request.getUsername();
         if (newUsername != null && !newUsername.trim().isEmpty() && !newUsername.equals(userToUpdate.getUsername())) {
-            // Check for duplicate username
             if (userRepository.findByUsername(newUsername).isPresent()) {
                 throw new IllegalArgumentException("이미 사용 중인 사용자 이름입니다.");
             }
@@ -124,9 +117,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public AdminUserDetailResponse getAdminUserDetails(Long userId, Long adminId) {
-        User user = findById(userId); // Use existing findById to get the user details
+        User user = findById(userId);
 
-        // Get posts and comments by the user, using adminId to check access
         List<PostResponse> posts = postService.getPostsByUserId(userId, adminId, true);
         List<CommentResponse> comments = commentService.getCommentsByUserId(userId, adminId, true);
 

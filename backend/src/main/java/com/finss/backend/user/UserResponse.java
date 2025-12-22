@@ -6,10 +6,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+//DTO
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor //기본 생성자 자동 생성 어노테이션
+@AllArgsConstructor//모든 필드를 인자로 받는 생성자 자동 생성
 @Builder
 public class UserResponse {
     private Long id;
@@ -17,7 +18,7 @@ public class UserResponse {
     private String email;
     private String role;
 
-    // Static method to convert User entity to UserResponse DTO
+    //Service -> Repository (Entity) -> DB -> Repository -> Service (Entity) -> Controller(DTO 변환) 직렬화 후 ResponseEntity 리턴
     public static UserResponse fromEntity(User user) {
         return UserResponse.builder()
                 .id(user.getId())
