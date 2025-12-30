@@ -32,6 +32,7 @@ public class UserServiceImpl implements UserService {
         }
 
         String role = "admin".equalsIgnoreCase(request.getUsername()) ? "ADMIN" : "USER";
+        //DTO -> Entity 객체 생성
         User newUser = User.builder()
                 .username(request.getUsername())
                 .password(request.getPassword())

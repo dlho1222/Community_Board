@@ -13,7 +13,7 @@ public class PostResponse {
     private Long id;
     private String title;
     private String content;
-    private Long authorId; // Added authorId
+    private Long authorId;
     private String authorName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -24,7 +24,7 @@ public class PostResponse {
                 .id(post.getId())
                 .title(post.getTitle())
                 .content(post.getContent())
-                .authorId(post.getUser().getId()) // Populate authorId
+                .authorId(post.getUser().getId())
                 .authorName(post.getUser().getUsername())
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())

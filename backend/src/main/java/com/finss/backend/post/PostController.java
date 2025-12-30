@@ -33,7 +33,7 @@ public class PostController {
             @RequestParam(defaultValue = "false") boolean isAdmin,
             Pageable pageable) { // Added Pageable parameter
         Long currentUserId = (Long) session.getAttribute("userId");
-        Page<PostResponse> posts = postService.getAllPosts(currentUserId, isAdmin, pageable); // Pass pageable
+        Page<PostResponse> posts = postService.getAllPosts(currentUserId, isAdmin, pageable);
         return ResponseEntity.ok(posts);
     }
 
@@ -75,13 +75,13 @@ public class PostController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Page<PostResponse>> searchPostsByTitle( // Changed return type
+    public ResponseEntity<Page<PostResponse>> searchPostsByTitle(
             @RequestParam String keyword,
             HttpSession session,
             @RequestParam(defaultValue = "false") boolean isAdmin,
-            Pageable pageable) { // Added Pageable parameter
+            Pageable pageable) {
         Long currentUserId = (Long) session.getAttribute("userId");
-        Page<PostResponse> posts = postService.searchPostsByTitle(keyword, currentUserId, isAdmin, pageable); // Pass pageable
+        Page<PostResponse> posts = postService.searchPostsByTitle(keyword, currentUserId, isAdmin, pageable);
         return ResponseEntity.ok(posts);
     }
 

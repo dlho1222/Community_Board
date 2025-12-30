@@ -32,8 +32,8 @@ public class PostServiceImpl implements PostService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
 
         Post newPost = Post.builder()
-                .title(request.getTitle())
-                .content(request.getContent())
+                .title(request.getTitle())          //xss 취약점 - 검증이나 정제 과정 없음 - OWASP Java HTML Sanitizer 사용
+                .content(request.getContent())      //xss 취약점
                 .secret(request.isSecret())
                 .user(user)
                 .createdAt(LocalDateTime.now())
@@ -91,8 +91,8 @@ public class PostServiceImpl implements PostService {
             throw new AccessDeniedException("게시글을 수정할 권한이 없습니다.");
         }
 
-        existingPost.setTitle(request.getTitle());
-        existingPost.setContent(request.getContent());
+        existingPost.setTitle(request.getTitle());          //xss 취약점 검증누락
+        existingPost.setContent(request.getContent());      //xss 취약점
         existingPost.setSecret(request.isSecret());
 
         Post updatedPost = postRepository.save(existingPost);

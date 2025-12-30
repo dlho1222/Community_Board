@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 //DB와 맵핑
-//User.java는 @Entity로 지정된 클래스로, 데이터베이스의 users 테이블과 매핑 사용자의 ID, 이름, 비밀번호, 이메일 등의 필드를 정의 - Repository->DB
+//User는 @Entity로 지정된 클래스로, 데이터베이스의 users 테이블과 매핑 사용자의 ID, 이름, 비밀번호, 이메일 등의 필드를 정의 - Repository->DB
 @Getter
 @Setter
 @NoArgsConstructor
