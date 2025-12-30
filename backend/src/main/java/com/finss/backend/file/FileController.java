@@ -37,8 +37,13 @@ public class FileController {
                 .path(uploadedFile.getId().toString())
                 .toUriString();
 
-        return new FileResponse(uploadedFile.getId(), uploadedFile.getOriginalFileName(), fileDownloadUri,
-                uploadedFile.getFileType(), uploadedFile.getFileSize());
+        return FileResponse.builder()
+                .id(uploadedFile.getId())
+                .fileName(uploadedFile.getOriginalFileName())
+                .fileDownloadUri(fileDownloadUri)
+                .fileType(uploadedFile.getFileType())
+                .fileSize(uploadedFile.getFileSize())
+                .build();
     }
 
     @GetMapping("/{fileId}")
@@ -75,8 +80,13 @@ public class FileController {
                             .path("/api/files/")
                             .path(file.getId().toString())
                             .toUriString();
-                    return new FileResponse(file.getId(), file.getOriginalFileName(), fileDownloadUri,
-                            file.getFileType(), file.getFileSize());
+                    return FileResponse.builder()
+                            .id(file.getId())
+                            .fileName(file.getOriginalFileName())
+                            .fileDownloadUri(fileDownloadUri)
+                            .fileType(file.getFileType())
+                            .fileSize(file.getFileSize())
+                            .build();
                 })
                 .collect(Collectors.toList());
     }

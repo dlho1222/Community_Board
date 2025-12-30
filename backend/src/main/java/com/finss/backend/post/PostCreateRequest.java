@@ -9,12 +9,12 @@ import lombok.Setter;
 @Setter
 public class PostCreateRequest {
 
-    @NotBlank(message = "Title is required.")
-    @Size(max = 100, message = "Title cannot be longer than 100 characters.")
+    @NotBlank(message = "제목은 필수 입니다.")
+    @Size(max = 100, message = "제목은 100자 이상 넘을 수 없습니다.")
     private String title;
 
-    @NotBlank(message = "Content is required.")
+    @NotBlank(message = "내용은 필수 입니다.")
     private String content;
 
-    private boolean secret; // Renamed from isSecret
+    private boolean secret;
 }

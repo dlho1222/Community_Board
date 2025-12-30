@@ -31,7 +31,7 @@ public class PostController {
     public ResponseEntity<Page<PostResponse>> getAllPosts(
             HttpSession session,
             @RequestParam(defaultValue = "false") boolean isAdmin,
-            Pageable pageable) { // Added Pageable parameter
+            Pageable pageable) {
         Long currentUserId = (Long) session.getAttribute("userId");
         Page<PostResponse> posts = postService.getAllPosts(currentUserId, isAdmin, pageable);
         return ResponseEntity.ok(posts);

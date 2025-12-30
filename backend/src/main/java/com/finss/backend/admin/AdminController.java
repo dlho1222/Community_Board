@@ -42,13 +42,13 @@ public class AdminController {
     // 게시글 전체 목록 조회
     @GetMapping("/posts")
     public ResponseEntity<Page<PostResponse>> getAllPostsForAdmin(@RequestHeader("X-USER-ID") Long adminId,
-                                                                  Pageable pageable) { // Added Pageable parameter
+                                                                  Pageable pageable) {
         User admin = userService.findById(adminId);
         if (!"ADMIN".equals(admin.getRole())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        Page<PostResponse> posts = postService.getAllPosts(adminId, true, pageable); // Pass pageable
+        Page<PostResponse> posts = postService.getAllPosts(adminId, true, pageable);
         return ResponseEntity.ok(posts);
     }
 

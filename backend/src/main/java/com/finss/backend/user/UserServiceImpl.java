@@ -122,7 +122,7 @@ public class UserServiceImpl implements UserService {
 
         List<PostResponse> posts = postService.getPostsByUserId(userId, adminId, true);
         List<CommentResponse> comments = commentService.getCommentsByUserId(userId, adminId, true);
-
+        //builder 패턴 - 객체를 생성할 때의 명확성과 안정성을 위해 사용
         return AdminUserDetailResponse.builder()
                 .user(UserResponse.fromEntity(user))
                 .posts(posts)

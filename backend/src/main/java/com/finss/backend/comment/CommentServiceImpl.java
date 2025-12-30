@@ -38,7 +38,7 @@ public class CommentServiceImpl implements CommentService {
                 .orElseThrow(() -> new IllegalArgumentException("Post not found with id: " + request.getPostId()));
 
         Comment newComment = Comment.builder()
-                .content(request.getContent())      //xss 취약점
+                .content(request.getContent())
                 .user(user)
                 .post(post)
                 .createdAt(LocalDateTime.now())
@@ -66,7 +66,7 @@ public class CommentServiceImpl implements CommentService {
         Comment existingComment = commentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Comment not found with id: " + id));
 
-        existingComment.setContent(content);        //stored xss 취약점 //불충분한인가 - 누가 이 수정을 요청했는지 확인하는 로직 없음
+        existingComment.setContent(content);
 
         Comment updatedComment = commentRepository.save(existingComment);
         return CommentResponse.fromEntity(updatedComment);

@@ -2,11 +2,10 @@ package com.finss.backend.post;
 
 import com.finss.backend.user.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -14,9 +13,10 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+/* JPA 스펙을 준수하기 위한 기본 생성자
+ JPA 구현체(Hibernate)가 DB에서 데이터를 조회하여 Post 객체를 생성할 때 내부적으로 사용
+ */
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 @Table(name = "posts")
 public class Post {
@@ -44,14 +44,23 @@ public class Post {
     private LocalDateTime updatedAt;
 
     @Column(name = "is_secret", nullable = false)
-    private boolean secret = false; // Mapped to 'is_secret' in DB
+    private boolean secret = false;
 
-    public Post(String title, String content, User user, boolean secret) {
+    //직접 Setter를 사용하는 대신 이 비즈니스 메소드를 통해 상태 변경의 일관성을 관리
+    public void update(String title, String content, boolean secret) {
         this.title = title;
         this.content = content;
-        this.user = user;
         this.secret = secret;
     }
 
-
+    @Builder
+    public Post(Long id, String title, String content, User user, LocalDateTime createdAt, LocalDateTime updatedAt, boolean secret) {
+        this.id = id;
+        this.title = title;
+        this.content = content;
+        this.user = user;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.secret = secret;
+    }
 }
