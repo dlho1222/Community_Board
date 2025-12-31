@@ -6,19 +6,19 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-//DTO
+//DTO Class
 @Getter
 @Setter
-@NoArgsConstructor //기본 생성자 자동 생성 어노테이션
-@AllArgsConstructor//모든 필드를 인자로 받는 생성자 자동 생성
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
+//HttpMessageConverter에 의해 직렬화 하는데 사용되는 클래스
 public class UserResponse {
     private Long id;
     private String username;
     private String email;
     private String role;
-
-    //Service -> Repository (Entity) -> DB -> Repository -> Service (Entity) -> Controller(DTO 변환) 직렬화 후 ResponseEntity 리턴
+    //Service의 처리 결과를 Controller에서 클라이언트에게 응답하기 위한 DTO 객체로 변환하기 위한 메서드
     public static UserResponse fromEntity(User user) {
         return UserResponse.builder()
                 .id(user.getId())

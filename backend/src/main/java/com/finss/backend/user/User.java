@@ -11,18 +11,19 @@ import lombok.Setter;
 import java.util.ArrayList;
 import java.util.List;
 
-//DB와 맵핑
+//DB와 매핑
 //User는 @Entity로 지정된 클래스로, 데이터베이스의 users 테이블과 매핑 사용자의 ID, 이름, 비밀번호, 이메일 등의 필드를 정의 - Repository->DB
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-@Entity
-@Table(name = "users")
+@Getter //Getter 생성
+@Setter //Setter 생성
+@NoArgsConstructor //파라미터가 없는 기본 생성자 자동 생성
+@AllArgsConstructor //모든 필드를 파라미터로 받는 생성자 자동 생성
+@Builder //객체를 빌더 패턴으로 생성하겠다
+@Entity //DB 테이블과 매핑되는 JPA 엔티티 명시
+@Table(name = "users") //users라는 테이블과 매핑
 public class User {
 
     @Id
+    //@GeneratedValue == AUTO_INCREAMENT
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
@@ -37,7 +38,7 @@ public class User {
 
     @Column(nullable = false)
     private String role;
-
+    //Post Entity와 1:N 관계 명시
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Post> posts = new ArrayList<>();

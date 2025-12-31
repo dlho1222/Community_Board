@@ -6,14 +6,15 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-//클라이언트가 보내는 데이터 형식을 정의하는 파일 클라이언트 -> 서버 역직렬화(JSON -> 객체) ,  (서버 -> 클라이언트 - Response 직렬화)
-//DTO
-@Getter
-@Setter
-@NoArgsConstructor
+//클라이언트가 보내는 데이터 형식을 정의하는 클래스 (역직렬화에 사용되는 클래스)
+//DTO Class
+@Getter // getter 생성
+@Setter // setter 생성
+@NoArgsConstructor // 파라미터가 없는 기본 생성자 생성
 public class UserRegisterRequest {
-
+    //공백을 제외한 값이 존재하는 문자열 유효성 검사
     @NotBlank(message = "사용자 이름은 필수입니다.")
+    //문자열 길이 또는 컬렉션 크기 범위 유효성 검사
     @Size(min = 2, max = 10, message = "사용자 이름은 2자 이상 10자 이하이어야 합니다.")
     private String username;
 
@@ -22,6 +23,7 @@ public class UserRegisterRequest {
     private String password;
 
     @NotBlank(message = "이메일은 필수입니다.")
+    //이메일 형식 유효성 검사
     @Email(message = "유효한 이메일 형식이 아닙니다.")
     private String email;
 }

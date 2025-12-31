@@ -13,8 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor //DI
-@Transactional //실행 중에 트랜잭션에 오류가 발생되면 트랜잭션이 '롤백'되고 변경 사항이 모두 취소, 성공하면 커밋
+@RequiredArgsConstructor //DI를 위한 생성자 자동 생성
+@Transactional //메서드 실행 중에 예외가 발생되면 데이터베이스 변경 사항이 자동으로 '롤백' 되고 변경 사항을 모두 취소, 성공하면 '커밋'
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
