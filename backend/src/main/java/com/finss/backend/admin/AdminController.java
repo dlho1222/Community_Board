@@ -2,7 +2,6 @@ package com.finss.backend.admin;
 
 import com.finss.backend.post.PostResponse;
 import com.finss.backend.post.PostService;
-import com.finss.backend.user.User;
 import com.finss.backend.user.UserResponse;
 import com.finss.backend.user.UserService;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -27,15 +25,12 @@ public class AdminController {
     @GetMapping("/users")
     public ResponseEntity<List<UserResponse>> getAllUsers(@RequestHeader("X-USER-ID") Long adminId) {
         // 관리자 권한 확인
-        User admin = userService.findById(adminId);
+        UserResponse admin = userService.findById(adminId);
         if (!"ADMIN".equals(admin.getRole())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        List<User> users = userService.findAll();
-        List<UserResponse> userResponses = users.stream()
-                .map(UserResponse::fromEntity)
-                .collect(Collectors.toList());
+        List<UserResponse> userResponses = userService.findAll();
         return ResponseEntity.ok(userResponses);
     }
 
@@ -43,7 +38,7 @@ public class AdminController {
     @GetMapping("/posts")
     public ResponseEntity<Page<PostResponse>> getAllPostsForAdmin(@RequestHeader("X-USER-ID") Long adminId,
                                                                   Pageable pageable) {
-        User admin = userService.findById(adminId);
+        UserResponse admin = userService.findById(adminId);
         if (!"ADMIN".equals(admin.getRole())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -55,7 +50,7 @@ public class AdminController {
     @DeleteMapping("/posts/{postId}")
     public ResponseEntity<Void> deletePostByAdmin(@RequestHeader("X-USER-ID") Long adminId,
                                                   @PathVariable Long postId) {
-        User admin = userService.findById(adminId);
+        UserResponse admin = userService.findById(adminId);
         if (!"ADMIN".equals(admin.getRole())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -69,13 +64,13 @@ public class AdminController {
     public ResponseEntity<UserResponse> updateUserByAdmin(@RequestHeader("X-USER-ID") Long adminId,
                                                           @PathVariable Long userId,
                                                           @RequestBody AdminUserUpdateRequest request) {
-        User admin = userService.findById(adminId);
+        UserResponse admin = userService.findById(adminId);
         if (!"ADMIN".equals(admin.getRole())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        User updatedUser = userService.adminUpdateUser(userId, request);
-        return ResponseEntity.ok(UserResponse.fromEntity(updatedUser));
+        UserResponse updatedUser = userService.adminUpdateUser(userId, request);
+        return ResponseEntity.ok(updatedUser);
     }
 
     // 비밀번호 재설정
@@ -83,7 +78,7 @@ public class AdminController {
     public ResponseEntity<String> resetPasswordByAdmin(@RequestHeader("X-USER-ID") Long adminId,
                                                        @PathVariable Long userId,
                                                        @RequestBody AdminPasswordResetRequest request) {
-        User admin = userService.findById(adminId);
+        UserResponse admin = userService.findById(adminId);
         if (!"ADMIN".equals(admin.getRole())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -96,7 +91,7 @@ public class AdminController {
     @GetMapping("/users/{userId}/details")
     public ResponseEntity<AdminUserDetailResponse> getUserDetailsByAdmin(@RequestHeader("X-USER-ID") Long adminId,
                                                                          @PathVariable Long userId) {
-        User admin = userService.findById(adminId);
+        UserResponse admin = userService.findById(adminId);
         if (!"ADMIN".equals(admin.getRole())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }

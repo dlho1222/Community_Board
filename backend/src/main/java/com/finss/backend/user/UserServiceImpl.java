@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor //DI를 위한 생성자 자동 생성
@@ -44,7 +45,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public User login(UserLoginRequest request) {
+    public UserResponse login(UserLoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
 
@@ -52,11 +53,11 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
-        return user;
+        return UserResponse.fromEntity(user);
     }
 
     @Override
-    public User update(Long id, UserUpdateRequest request) {
+    public UserResponse update(Long id, UserUpdateRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
@@ -74,25 +75,30 @@ public class UserServiceImpl implements UserService {
             user.setPassword(request.getPassword());
         }
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        return UserResponse.fromEntity(savedUser);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public User findById(Long id) {
-        return userRepository.findById(id)
+    public UserResponse findById(Long id) {
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        return UserResponse.fromEntity(user);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<User> findAll() {
-        return userRepository.findAll();
+    public List<UserResponse> findAll() {
+        return userRepository.findAll().stream()
+                .map(UserResponse::fromEntity)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public User adminUpdateUser(Long userId, AdminUserUpdateRequest request) {
-        User userToUpdate = findById(userId);
+    public UserResponse adminUpdateUser(Long userId, AdminUserUpdateRequest request) {
+        User userToUpdate = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         String newUsername = request.getUsername();
         if (newUsername != null && !newUsername.trim().isEmpty() && !newUsername.equals(userToUpdate.getUsername())) {
@@ -102,7 +108,8 @@ public class UserServiceImpl implements UserService {
             userToUpdate.setUsername(newUsername);
         }
 
-        return userRepository.save(userToUpdate);
+        User savedUser = userRepository.save(userToUpdate);
+        return UserResponse.fromEntity(savedUser);
     }
 
     @Override
@@ -110,7 +117,8 @@ public class UserServiceImpl implements UserService {
         if (newPassword == null || newPassword.trim().isEmpty()) {
             throw new IllegalArgumentException("새 비밀번호는 비어 있을 수 없습니다.");
         }
-        User userToUpdate = findById(userId);
+        User userToUpdate = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         userToUpdate.setPassword(newPassword.trim());
         userRepository.save(userToUpdate);
     }
@@ -118,7 +126,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public AdminUserDetailResponse getAdminUserDetails(Long userId, Long adminId) {
-        User user = findById(userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         List<PostResponse> posts = postService.getPostsByUserId(userId, adminId, true);
         List<CommentResponse> comments = commentService.getCommentsByUserId(userId, adminId, true);

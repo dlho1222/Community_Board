@@ -26,9 +26,9 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<UserResponse> loginUser(@Valid @RequestBody UserLoginRequest request, HttpSession session) {
-        User user = userService.login(request);
-        session.setAttribute("userId", user.getId());
-        return ResponseEntity.ok(UserResponse.fromEntity(user));
+        UserResponse userResponse = userService.login(request);
+        session.setAttribute("userId", userResponse.getId());
+        return ResponseEntity.ok(userResponse);
     }
 
     @PostMapping("/logout")
@@ -39,8 +39,8 @@ public class UserController {
 
     @PutMapping("/{id}")
     public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @Valid @RequestBody UserUpdateRequest request) {
-        User updatedUser = userService.update(id, request);
-        return ResponseEntity.ok(UserResponse.fromEntity(updatedUser));
+        UserResponse updatedUser = userService.update(id, request);
+        return ResponseEntity.ok(updatedUser);
     }
 
     @GetMapping("/me")
@@ -49,8 +49,8 @@ public class UserController {
         if (userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        User user = userService.findById(userId);
-        return ResponseEntity.ok(UserResponse.fromEntity(user));
+        UserResponse userResponse = userService.findById(userId);
+        return ResponseEntity.ok(userResponse);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
