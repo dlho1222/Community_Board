@@ -1,19 +1,27 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { Container, Form, Button, Card, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import api from '../api/api';
+
+import Container from '@mui/material/Container';
+import Box from '@mui/material/Box';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Typography from '@mui/material/Typography';
+import Alert from '@mui/material/Alert';
+import CircularProgress from '@mui/material/CircularProgress';
+import FormHelperText from '@mui/material/FormHelperText';
 
 const UserProfilePage: React.FC = () => {
     const authContext = useContext(AuthContext);
     const navigate = useNavigate();
 
-    // State for form fields
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState(''); // New state for confirm password
+    const [confirmPassword, setConfirmPassword] = useState('');
 
-    // State for messages
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -27,7 +35,7 @@ const UserProfilePage: React.FC = () => {
     }, [authContext, navigate]);
 
     if (!authContext) {
-        return null;
+        return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}><CircularProgress /></Box>;
     }
     const { user, login } = authContext;
 
@@ -43,7 +51,7 @@ const UserProfilePage: React.FC = () => {
             return;
         }
 
-        if (password !== confirmPassword) { // Client-side password confirmation
+        if (password && password !== confirmPassword) {
             setError('New passwords do not match.');
             setLoading(false);
             return;
@@ -57,11 +65,6 @@ const UserProfilePage: React.FC = () => {
             }
 
             if (password.trim() !== '') {
-                if (password !== confirmPassword) { // Client-side password confirmation
-                    setError('New passwords do not match.');
-                    setLoading(false);
-                    return;
-                }
                 updatePayload.password = password;
             }
 
@@ -73,19 +76,17 @@ const UserProfilePage: React.FC = () => {
 
             const response = await api.put(`/api/users/${user.id}`, updatePayload);
             const updatedUser = response.data;
-            login(updatedUser); // Update context and localStorage
+            login(updatedUser);
             setSuccess('Profile updated successfully!');
-            setPassword(''); // Clear password field after submission
-            setConfirmPassword(''); // Clear confirm password field
+            setPassword('');
+            setConfirmPassword('');
         } catch (err: any) {
             if (err.response && err.response.data) {
-                // Backend validation errors often come as an object
                 if (typeof err.response.data === 'string') {
                     setError(err.response.data);
                 } else if (err.response.data.message) {
                     setError(err.response.data.message);
                 } else if (err.response.data.errors && Array.isArray(err.response.data.errors)) {
-                    // Assuming Spring Validation errors array
                     const validationErrors = err.response.data.errors.map((e: any) => e.defaultMessage || e.message).join(', ');
                     setError(validationErrors || 'Validation error occurred.');
                 } else if (err.response.data.error) {
@@ -105,59 +106,74 @@ const UserProfilePage: React.FC = () => {
 
 
     return (
-        <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
-            <Card style={{ width: '30rem' }}>
-                <Card.Body>
-                    <h2 className="text-center mb-4">User Profile</h2>
-                    {error && <Alert variant="danger">{error}</Alert>}
-                    {success && <Alert variant="success">{success}</Alert>}
-                    <Form onSubmit={handleSubmit}>
-                         <Form.Group className="mb-3" controlId="formBasicEmail">
-                            <Form.Label>Email address</Form.Label>
-                            <Form.Control type="email" value={user?.email || ''} disabled />
-                             <Form.Text className="text-muted">
-                                 Email cannot be changed.
-                             </Form.Text>
-                        </Form.Group>
+        <Container component="main" maxWidth="sm" sx={{ mt: 8, mb: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <Card sx={{ width: '100%', maxWidth: '30rem' }}>
+                <CardContent>
+                    <Typography component="h1" variant="h5" align="center" sx={{ mb: 4 }}>
+                        User Profile
+                    </Typography>
+                    {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+                    {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+                    <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+                         <TextField
+                            margin="normal"
+                            fullWidth
+                            id="email"
+                            label="Email Address"
+                            name="email"
+                            value={user?.email || ''}
+                            disabled
+                            InputProps={{
+                                readOnly: true,
+                            }}
+                        />
+                        <FormHelperText sx={{ mb: 2 }}>Email cannot be changed.</FormHelperText>
 
-                        <Form.Group className="mb-3" controlId="formBasicUsername">
-                            <Form.Label>Username</Form.Label>
-                            <Form.Control
-                                type="text"
-                                placeholder="Enter new username"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                                // Removed 'required' attribute
-                            />
-                        </Form.Group>
+                        <TextField
+                            margin="normal"
+                            fullWidth
+                            id="username"
+                            label="Username"
+                            name="username"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                        />
 
-                        <Form.Group className="mb-3" controlId="formBasicPassword">
-                            <Form.Label>New Password</Form.Label>
-                            <Form.Control
-                                type="password"
-                                placeholder="Enter new password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                // Removed 'required' attribute
-                            />
-                        </Form.Group>
+                        <TextField
+                            margin="normal"
+                            fullWidth
+                            name="password"
+                            label="New Password"
+                            type="password"
+                            id="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
 
-                        <Form.Group className="mb-3" controlId="formBasicConfirmPassword">
-                            <Form.Label>Confirm New Password</Form.Label>
-                            <Form.Control
-                                type="password"
-                                placeholder="Confirm new password"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                // Removed 'required' attribute
-                            />
-                        </Form.Group>
+                        <TextField
+                            margin="normal"
+                            fullWidth
+                            name="confirmPassword"
+                            label="Confirm New Password"
+                            type="password"
+                            id="confirmPassword"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            error={!!error && error === 'New passwords do not match.'}
+                            helperText={error === 'New passwords do not match.' ? error : ''}
+                        />
 
-                        <Button variant="primary" type="submit" className="w-100" disabled={loading}>
-                            {loading ? 'Updating...' : 'Update Profile'}
+                        <Button
+                            type="submit"
+                            fullWidth
+                            variant="contained"
+                            sx={{ mt: 3, mb: 2 }}
+                            disabled={loading}
+                        >
+                            {loading ? <CircularProgress size={24} color="inherit" /> : 'Update Profile'}
                         </Button>
-                    </Form>
-                </Card.Body>
+                    </Box>
+                </CardContent>
             </Card>
         </Container>
     );

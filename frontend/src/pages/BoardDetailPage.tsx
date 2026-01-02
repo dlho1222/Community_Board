@@ -1,13 +1,34 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react';
-import { Container, Card, Button, Alert, Spinner, ListGroup, Form } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
 import postApi from '../api/postApi';
-import type { PostResponse } from '../api/postApi'; // Explicitly import type only
+import type { PostResponse } from '../api/postApi';
 import commentApi from '../api/commentApi';
 import type { CommentResponse } from '../api/commentApi';
-import { AuthContext } from '../context/AuthContext'; // Import AuthContext
-import { fileApi } from '../api/fileApi'; // Import fileApi and FileResponse
+import { AuthContext } from '../context/AuthContext';
+import { fileApi } from '../api/fileApi';
 import type { FileResponse } from '../api/fileApi';
+
+// MUI Components
+import {
+    Container,
+    Box,
+    Button,
+    Alert,
+    CircularProgress,
+    Card,
+    CardContent,
+    CardHeader,
+    Typography,
+    List,
+    ListItem,
+    ListItemText,
+    TextField,
+    Divider,
+    IconButton,
+    Link as MuiLink, // Alias MUI Link to avoid conflict with RouterLink
+} from '@mui/material';
+import DescriptionIcon from '@mui/icons-material/Description';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 const BoardDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,21 +37,23 @@ const BoardDetailPage: React.FC = () => {
 
   const [post, setPost] = useState<PostResponse | null>(null);
   const [comments, setComments] = useState<CommentResponse[]>([]);
-  const [files, setFiles] = useState<FileResponse[]>([]); // New state for files
+  const [files, setFiles] = useState<FileResponse[]>([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   if (!authContext) {
-    // This should ideally not happen if the component is wrapped in AuthProvider
-    return <Container className="mt-4"><Alert variant="danger">Authentication context not found.</Alert></Container>;
+    return (
+        <Container sx={{ mt: 4 }}>
+            <Alert severity="error">Authentication context not found.</Alert>
+        </Container>
+    );
   }
 
   const { user } = authContext;
   const isAuthor = user && post && user.id === post.authorId;
-  const isAdmin = user?.role === 'ADMIN'; // Use user from authContext, not post
+  const isAdmin = user?.role === 'ADMIN';
 
-  // Function to format file size
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -53,8 +76,8 @@ const BoardDetailPage: React.FC = () => {
       setPost(postData);
       const commentsData = await commentApi.getCommentsByPostId(postId, user?.id, isAdmin);
       setComments(commentsData);
-      const filesData = await fileApi.getFilesByPostId(postId, user?.id, isAdmin); // Fetch files
-      setFiles(filesData); // Set files state
+      const filesData = await fileApi.getFilesByPostId(postId, user?.id, isAdmin);
+      setFiles(filesData);
     } catch (err: any) {
       console.error('Failed to fetch post or comments:', err);
       if (err.response && err.response.data && err.response.data.message) {
@@ -68,14 +91,13 @@ const BoardDetailPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [id, user?.id, isAdmin]); // Add user?.id and isAdmin to dependencies
+  }, [id, user?.id, isAdmin]);
 
 
   useEffect(() => {
     fetchPostAndRelatedData();
   }, [fetchPostAndRelatedData]);
 
-  // Debugging logs for isAuthor (removed isAdmin from here, it's already calculated above)
   useEffect(() => {
     if (user && post) {
       console.log('--- Debugging isAuthor ---');
@@ -91,7 +113,7 @@ const BoardDetailPage: React.FC = () => {
     }
   }, [user, post, isAuthor, isAdmin]);
 
-  const handleCommentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !post || !newComment.trim()) {
       return;
@@ -102,7 +124,7 @@ const BoardDetailPage: React.FC = () => {
         content: newComment,
         userId: user.id,
         postId: post.id,
-      }, user.id, isAdmin); // Pass currentUserId and isAdmin
+      }, user.id, isAdmin);
       setComments([...comments, newCommentData]);
       setNewComment('');
     } catch (err: any) {
@@ -120,7 +142,7 @@ const BoardDetailPage: React.FC = () => {
       return;
     }
     try {
-      await commentApi.deleteComment(commentId, user?.id, isAdmin); // Pass currentUserId and isAdmin
+      await commentApi.deleteComment(commentId, user?.id, isAdmin);
       setComments(comments.filter((comment) => comment.id !== commentId));
     } catch (err: any) {
       console.error('Failed to delete comment:', err);
@@ -138,8 +160,8 @@ const BoardDetailPage: React.FC = () => {
     }
     try {
       setLoading(true);
-      await postApi.deletePost(post.id, user?.id, isAdmin); // Pass currentUserId and isAdmin
-      navigate('/board'); // Redirect to board list after deletion
+      await postApi.deletePost(post.id, user?.id, isAdmin);
+      navigate('/board');
     } catch (err: any) {
       console.error('Failed to delete post:', err);
       if (err.response && err.response.data && err.response.data.message) {
@@ -154,11 +176,11 @@ const BoardDetailPage: React.FC = () => {
 
   const handleFileDownload = async (fileId: number, fileName: string) => {
     try {
-      const blob = await fileApi.downloadFile(fileId, user?.id, isAdmin); // Pass currentUserId and isAdmin
+      const blob = await fileApi.downloadFile(fileId, user?.id, isAdmin);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = fileName; // Use the original file name for download
+      a.download = fileName;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -178,8 +200,8 @@ const BoardDetailPage: React.FC = () => {
       return;
     }
     try {
-      await fileApi.deleteFile(fileId, user?.id, isAdmin); // Pass currentUserId and isAdmin
-      setFiles(files.filter(file => file.id !== fileId)); // Update local state
+      await fileApi.deleteFile(fileId, user?.id, isAdmin);
+      setFiles(files.filter(file => file.id !== fileId));
     } catch (err: any) {
       console.error('Failed to delete file:', err);
       if (err.response && err.response.data && err.response.data.message) {
@@ -193,121 +215,132 @@ const BoardDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <Container className="mt-4 text-center">
-        <Spinner animation="border" role="status">
-          <span className="visually-hidden">Loading post...</span>
-        </Spinner>
+      <Container sx={{ mt: 4, textAlign: 'center' }}>
+        <CircularProgress />
+        <Typography>Loading post...</Typography>
       </Container>
     );
   }
 
   if (error) {
     return (
-      <Container className="mt-4">
-        <Alert variant="danger">{error}</Alert>
+      <Container sx={{ mt: 4 }}>
+        <Alert severity="error">{error}</Alert>
       </Container>
     );
   }
 
   if (!post) {
     return (
-      <Container className="mt-4">
-        <Alert variant="info">Post not found.</Alert>
+      <Container sx={{ mt: 4 }}>
+        <Alert severity="info">Post not found.</Alert>
       </Container>
     );
   }
 
   return (
-    <Container className="mt-4">
+    <Container sx={{ mt: 4 }}>
       <Card>
-        <Card.Header as="h5">{post.secret ? '비밀글입니다.' : post.title}</Card.Header>
-        <Card.Body>
-          <Card.Subtitle className="mb-2 text-muted">
+        <CardHeader
+          title={post.secret ? '비밀글입니다.' : post.title}
+          titleTypographyProps={{ variant: 'h5' }}
+        />
+        <CardContent>
+          <Typography variant="subtitle1" color="text.secondary" gutterBottom>
             작성자: {post.authorName} | 작성일: {new Date(post.createdAt).toLocaleDateString()}
-          </Card.Subtitle>
-          <Card.Text>
+          </Typography>
+          <Typography variant="body1" paragraph>
             {post.secret && !(isAuthor || isAdmin)
               ? '이 글은 비밀글입니다. 작성자 또는 관리자만 내용을 볼 수 있습니다.'
               : post.content}
-          </Card.Text>
+          </Typography>
 
           {/* Files Section */}
           {files.length > 0 && (
-            <div className="mt-4">
-              <h5>첨부 파일</h5>
-              <ListGroup>
+            <Box sx={{ mt: 4 }}>
+              <Typography variant="h6" gutterBottom>첨부 파일</Typography>
+              <List>
                 {files.map((file) => (
-                  <ListGroup.Item key={file.id} className="d-flex justify-content-between align-items-center">
-                    <div>
-                      <Button variant="link" onClick={() => handleFileDownload(file.id, file.fileName)} className="p-0 align-baseline">
-                        {file.fileName} ({formatFileSize(file.fileSize)})
-                      </Button>
-                    </div>
-                    {(isAuthor || isAdmin) && (
-                      <Button variant="danger" size="sm" onClick={() => handleFileDelete(file.id)}>
-                        삭제
-                      </Button>
-                    )}
-                  </ListGroup.Item>
+                  <ListItem key={file.id} secondaryAction={
+                    (isAuthor || isAdmin) && (
+                      <IconButton edge="end" aria-label="delete" onClick={() => handleFileDelete(file.id)}>
+                        <DeleteIcon />
+                      </IconButton>
+                    )
+                  }>
+                    <MuiLink component="button" variant="body2" onClick={() => handleFileDownload(file.id, file.fileName)} sx={{ display: 'flex', alignItems: 'center', p: 0 }}>
+                      <DescriptionIcon sx={{ mr: 1 }} />
+                      <ListItemText primary={`${file.fileName} (${formatFileSize(file.fileSize)})`} />
+                    </MuiLink>
+                  </ListItem>
                 ))}
-              </ListGroup>
-            </div>
+              </List>
+            </Box>
           )}
 
           {/* Edit and Delete buttons */}
           {(isAuthor || isAdmin) && (
-            <div className="d-flex justify-content-end mb-3 mt-4">
-              <Button variant="secondary" className="me-2" onClick={() => navigate(`/board/edit/${post.id}`)} disabled={loading}>Edit</Button>
-              <Button variant="danger" onClick={handleDelete} disabled={loading}>Delete</Button>
-            </div>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, mb: 4 }}>
+              <Button variant="outlined" color="secondary" sx={{ mr: 2 }} onClick={() => navigate(`/board/edit/${post.id}`)} disabled={loading}>Edit</Button>
+              <Button variant="contained" color="error" onClick={handleDelete} disabled={loading}>Delete</Button>
+            </Box>
           )}
 
-          <hr />
+          <Divider sx={{ my: 4 }} />
 
           {/* Comments Section */}
-          <div className="mt-4">
-            <h5>댓글</h5>
-            <ListGroup>
+          <Box sx={{ mt: 4 }}>
+            <Typography variant="h6" gutterBottom>댓글</Typography>
+            <List>
               {comments.map((comment) => (
-                <ListGroup.Item key={comment.id} className="d-flex justify-content-between align-items-start">
-                  <div>
-                    <strong>{comment.authorName}</strong>
-                    <p className="mb-1">{comment.content}</p>
-                    <small className="text-muted">{new Date(comment.createdAt).toLocaleString()}</small>
-                  </div>
-                  {(user?.id === comment.userId || isAdmin) && (
-                    <Button variant="danger" size="sm" onClick={() => handleCommentDelete(comment.id)}>
-                      Delete
-                    </Button>
-                  )}
-                </ListGroup.Item>
+                <ListItem key={comment.id} divider secondaryAction={
+                    (user?.id === comment.userId || isAdmin) && (
+                      <IconButton edge="end" aria-label="delete" onClick={() => handleCommentDelete(comment.id)}>
+                        <DeleteIcon />
+                      </IconButton>
+                    )
+                  }>
+                  <ListItemText
+                    primary={
+                      <>
+                        <Typography component="span" variant="body2" fontWeight="bold">
+                          {comment.authorName}
+                        </Typography>
+                        <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                          {new Date(comment.createdAt).toLocaleString()}
+                        </Typography>
+                      </>
+                    }
+                    secondary={comment.content}
+                  />
+                </ListItem>
               ))}
-            </ListGroup>
+            </List>
 
             {/* New Comment Form */}
             {user && (!post.secret || isAuthor || isAdmin) && (
-              <Form className="mt-4" onSubmit={handleCommentSubmit}>
-                <Form.Group className="mb-3">
-                  <Form.Label>댓글 작성</Form.Label>
-                  <Form.Control
-                    as="textarea"
-                    rows={3}
-                    placeholder="댓글을 입력하세요."
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                  />
-                </Form.Group>
-                <Button variant="primary" type="submit">
+              <Box component="form" sx={{ mt: 4 }} onSubmit={handleCommentSubmit}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={3}
+                  label="댓글 작성"
+                  placeholder="댓글을 입력하세요."
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  sx={{ mb: 2 }}
+                />
+                <Button variant="contained" type="submit" color="primary">
                   등록
                 </Button>
-              </Form>
+              </Box>
             )}
-          </div>
+          </Box>
           
-          <Button variant="primary" onClick={() => navigate('/board')} disabled={loading} className="mt-4">
+          <Button variant="contained" onClick={() => navigate('/board')} disabled={loading} sx={{ mt: 4 }}>
             목록으로
           </Button>
-        </Card.Body>
+        </CardContent>
       </Card>
     </Container>
   );

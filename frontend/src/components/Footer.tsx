@@ -1,13 +1,25 @@
 import React from 'react';
-import { Container } from 'react-bootstrap';
+import { Container, Box, Typography } from '@mui/material';
 
 const Footer: React.FC = () => {
   return (
-    <footer className="mt-5 p-3 bg-light text-center">
-      <Container>
-        <p>&copy; {new Date().getFullYear()} Community Board. All Rights Reserved.</p>
+    <Box
+      component="footer"
+      sx={{
+        mt: 5,
+        p: 3,
+        bgcolor: 'background.paper', // Equivalent to bg-light
+        textAlign: 'center',
+        borderTop: 1,
+        borderColor: 'divider',
+      }}
+    >
+      <Container maxWidth="xl">
+        <Typography variant="body2" color="text.secondary">
+          &copy; {new Date().getFullYear()} Community Board. All Rights Reserved.
+        </Typography>
       </Container>
-    </footer>
+    </Box>
   );
 };
 

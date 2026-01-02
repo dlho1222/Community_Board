@@ -1,11 +1,44 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react';
-import { Container, Form, Button, Card, Alert, Spinner, ListGroup } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
 import postApi from '../api/postApi';
 import type { PostCreateRequest, PostUpdateRequest } from '../api/postApi';
 import { AuthContext } from '../context/AuthContext';
 import { fileApi } from '../api/fileApi';
 import type { FileResponse } from '../api/fileApi';
+
+// MUI Components
+import {
+    Container,
+    Box,
+    TextField,
+    Button,
+    Card,
+    CardContent,
+    Typography,
+    Alert,
+    CircularProgress,
+    Checkbox,
+    FormControlLabel,
+    List,
+    ListItem,
+    ListItemText,
+    IconButton,
+} from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { styled } from '@mui/material/styles';
+
+const VisuallyHiddenInput = styled('input')({
+    clip: 'rect(0 0 0 0)',
+    clipPath: 'inset(50%)',
+    height: 1,
+    overflow: 'hidden',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    whiteSpace: 'nowrap',
+    width: 1,
+});
 
 const BoardWritePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -23,7 +56,11 @@ const BoardWritePage: React.FC = () => {
   const [initialLoading, setInitialLoading] = useState(true);
 
   if (!authContext) {
-    return <Container className="mt-4"><Alert variant="danger">Authentication context not found.</Alert></Container>;
+    return (
+        <Container sx={{ mt: 4 }}>
+            <Alert severity="error">Authentication context not found.</Alert>
+        </Container>
+    );
   }
 
   const { user } = authContext;
@@ -114,7 +151,7 @@ const BoardWritePage: React.FC = () => {
       let postId: number;
       if (isEditing && id) {
         const updatedPost: PostUpdateRequest = { title, content, secret };
-        await postApi.updatePost(parseInt(id), updatedPost, user?.id, isAdmin); // Pass currentUserId and isAdmin
+        await postApi.updatePost(parseInt(id), updatedPost, user?.id, isAdmin);
         postId = parseInt(id);
       } else {
         const newPost: PostCreateRequest = { title, content, userId: user.id, secret };
@@ -143,92 +180,124 @@ const BoardWritePage: React.FC = () => {
 
   if (initialLoading) {
     return (
-      <Container className="mt-4 text-center">
-        <Spinner animation="border" role="status">
-          <span className="visually-hidden">Loading post data...</span>
-        </Spinner>
+      <Container sx={{ mt: 4, textAlign: 'center' }}>
+        <CircularProgress />
+        <Typography>Loading post data...</Typography>
       </Container>
     );
   }
 
   return (
-    <Container className="mt-4">
+    <Container sx={{ mt: 4 }}>
       <Card>
-        <Card.Body>
-          <h2 className="text-center mb-4">{isEditing ? '게시글 수정' : '게시글 작성'}</h2>
-          {error && <Alert variant="danger">{error}</Alert>}
-          <Form onSubmit={handleSubmit}>
-            <Form.Group className="mb-3" controlId="postTitle">
-              <Form.Label>제목</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="제목을 입력하세요"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </Form.Group>
+        <CardContent>
+          <Typography variant="h5" component="h1" align="center" sx={{ mb: 4 }}>
+            {isEditing ? '게시글 수정' : '게시글 작성'}
+          </Typography>
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="postTitle"
+              label="제목"
+              placeholder="제목을 입력하세요"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              disabled={loading}
+              sx={{ mb: 2 }}
+            />
 
-            <Form.Group className="mb-3" controlId="postContent">
-              <Form.Label>내용</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={10}
-                placeholder="내용을 입력하세요"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </Form.Group>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              multiline
+              rows={10}
+              id="postContent"
+              label="내용"
+              placeholder="내용을 입력하세요"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              disabled={loading}
+              sx={{ mb: 2 }}
+            />
 
             {isEditing && existingFiles.length > 0 && (
-              <Form.Group className="mb-3">
-                <Form.Label>첨부된 파일</Form.Label>
-                <ListGroup>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle1" gutterBottom>첨부된 파일</Typography>
+                <List dense>
                   {existingFiles.map((file) => (
-                    <ListGroup.Item key={file.id} className="d-flex justify-content-between align-items-center">
-                      <span>{file.fileName} ({formatFileSize(file.fileSize)})</span>
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => handleDeleteExistingFile(file.id)}
-                        disabled={loading}
-                      >
-                        삭제
-                      </Button>
-                    </ListGroup.Item>
+                    <ListItem
+                      key={file.id}
+                      secondaryAction={
+                        <IconButton edge="end" aria-label="delete" onClick={() => handleDeleteExistingFile(file.id)} disabled={loading}>
+                          <DeleteIcon />
+                        </IconButton>
+                      }
+                    >
+                      <ListItemText primary={`${file.fileName} (${formatFileSize(file.fileSize)})`} />
+                    </ListItem>
                   ))}
-                </ListGroup>
-              </Form.Group>
+                </List>
+              </Box>
             )}
 
-            <Form.Group controlId="formFile" className="mb-3">
-              <Form.Label>파일 추가</Form.Label>
-              <Form.Control type="file" multiple onChange={handleFileChange} disabled={loading} />
-            </Form.Group>
-
-            <Form.Group className="mb-3" controlId="formSecret">
-              <Form.Check
-                type="checkbox"
-                label="비밀글"
-                checked={secret}
-                onChange={(e) => setSecret(e.target.checked)}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" gutterBottom>파일 추가</Typography>
+              <Button
+                component="label"
+                variant="contained"
+                startIcon={<CloudUploadIcon />}
                 disabled={loading}
-              />
-            </Form.Group>
+              >
+                파일 선택
+                <VisuallyHiddenInput type="file" multiple onChange={handleFileChange} />
+              </Button>
+              {selectedFiles && selectedFiles.length > 0 && (
+                  <Box sx={{ mt: 1 }}>
+                      <Typography variant="body2" color="text.secondary">
+                          {Array.from(selectedFiles).map(file => file.name).join(', ')}
+                      </Typography>
+                  </Box>
+              )}
+            </Box>
 
-            <div className="d-grid gap-2">
-              <Button variant="primary" type="submit" disabled={loading}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={secret}
+                  onChange={(e) => setSecret(e.target.checked)}
+                  disabled={loading}
+                />
+              }
+              label="비밀글"
+              sx={{ mb: 3 }}
+            />
+
+            <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                fullWidth
+                disabled={loading}
+              >
                 {loading ? (isEditing ? '수정 중...' : '작성 중...') : (isEditing ? '수정 완료' : '작성 완료')}
               </Button>
-              <Button variant="secondary" onClick={() => navigate(-1)} disabled={loading}>
+              <Button
+                variant="outlined"
+                color="secondary"
+                fullWidth
+                onClick={() => navigate(-1)}
+                disabled={loading}
+              >
                 취소
               </Button>
-            </div>
-          </Form>
-        </Card.Body>
+            </Box>
+          </Box>
+        </CardContent>
       </Card>
     </Container>
   );

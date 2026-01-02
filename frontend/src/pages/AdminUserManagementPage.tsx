@@ -1,34 +1,59 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Container, Table, Button, Alert, Spinner, Modal, Form, ListGroup, Card } from 'react-bootstrap';
 import { AuthContext } from '../context/AuthContext';
 import type { User } from '../context/AuthContext';
 import adminApi from '../api/adminApi';
 import type { AdminUserDetailResponse } from '../api/adminApi';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
+
+// MUI Components
+import {
+    Container,
+    Box,
+    Button,
+    Alert,
+    CircularProgress,
+    Typography,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Paper,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    TextField,
+    List,
+    ListItem,
+    ListItemText,
+    Card,
+    CardHeader,
+    CardContent,
+} from '@mui/material';
 
 const AdminUserManagementPage: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // State for the edit modal
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [newUsername, setNewUsername] = useState('');
 
-  // State for the password reset modal
   const [showResetModal, setShowResetModal] = useState(false);
   const [resettingUser, setResettingUser] = useState<User | null>(null);
   const [newPassword, setNewPassword] = useState('');
 
-  // State for the user details modal
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedUserDetail, setSelectedUserDetail] = useState<AdminUserDetailResponse | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [detailsError, setDetailsError] = useState<string | null>(null);
   
   const authContext = useContext(AuthContext);
-  useNavigate();
+  useNavigate(); // Keep useNavigate for consistency, though not directly used here
+
   useEffect(() => {
     const fetchUsers = async () => {
       if (authContext?.user?.role !== 'ADMIN') {
@@ -96,6 +121,7 @@ const AdminUserManagementPage: React.FC = () => {
 
   const handleResetClick = (user: User) => {
     setResettingUser(user);
+    setNewPassword(''); // Clear password field on opening
     setShowResetModal(true);
   };
 
@@ -153,174 +179,161 @@ const AdminUserManagementPage: React.FC = () => {
 
   if (loading) {
     return (
-      <Container className="mt-4 text-center">
-        <Spinner animation="border" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </Spinner>
+      <Container sx={{ mt: 4, textAlign: 'center' }}>
+        <CircularProgress />
+        <Typography>Loading users...</Typography>
       </Container>
     );
   }
 
   if (error) {
     return (
-      <Container className="mt-4">
-        <Alert variant="danger">{error}</Alert>
+      <Container sx={{ mt: 4 }}>
+        <Alert severity="error">{error}</Alert>
       </Container>
     );
   }
   
   return (
     <>
-      <Container className="mt-4">
-        <h2 className="mb-4">Admin: User Management</h2>
-        <Table striped bordered hover responsive>
-          <thead>
-            <tr>
-              <th>Id</th>
-              <th>Username</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user.id}>
-                <td>{user.id}</td>
-                <td>{user.username}</td>
-                <td>{user.email}</td>
-                <td>{user.role}</td>
-                <td>
-                  <Button variant="primary" size="sm" className="me-2" onClick={() => handleViewDetailsClick(user)} disabled={detailsLoading}>View Details</Button>
-                  <Button variant="info" size="sm" className="me-2" onClick={() => handleEditClick(user)} disabled={detailsLoading}>Edit Username</Button>
-                  <Button variant="warning" size="sm" onClick={() => handleResetClick(user)} disabled={detailsLoading}>Edit Password</Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+      <Container sx={{ mt: 4 }}>
+        <Typography variant="h4" component="h2" gutterBottom>Admin: User Management</Typography>
+        <TableContainer component={Paper}>
+          <Table sx={{ minWidth: 650 }} aria-label="user management table">
+            <TableHead>
+              <TableRow>
+                <TableCell>Id</TableCell>
+                <TableCell>Username</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Role</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell>{user.id}</TableCell>
+                  <TableCell>{user.username}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.role}</TableCell>
+                  <TableCell>
+                    <Button variant="contained" size="small" sx={{ mr: 1 }} onClick={() => handleViewDetailsClick(user)} disabled={detailsLoading}>View Details</Button>
+                    <Button variant="outlined" size="small" sx={{ mr: 1 }} onClick={() => handleEditClick(user)} disabled={detailsLoading}>Edit Username</Button>
+                    <Button variant="outlined" size="small" onClick={() => handleResetClick(user)} disabled={detailsLoading}>Edit Password</Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Container>
 
       {/* Edit User Modal */}
-      <Modal show={showEditModal} onHide={handleEditClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>Edit User: {editingUser?.username}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>New Username</Form.Label>
-              <Form.Control
-                type="text"
-                value={newUsername}
-                onChange={(e) => setNewUsername(e.target.value)}
-                autoFocus
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleEditClose}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleUpdateUser}>
-            Save Changes
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <Dialog open={showEditModal} onClose={handleEditClose}>
+        <DialogTitle>Edit User: {editingUser?.username}</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="newUsername"
+            label="New Username"
+            type="text"
+            fullWidth
+            variant="standard"
+            value={newUsername}
+            onChange={(e) => setNewUsername(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleEditClose}>Cancel</Button>
+          <Button onClick={handleUpdateUser}>Save Changes</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Reset Password Modal */}
-      <Modal show={showResetModal} onHide={handleResetClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>Reset Password for {resettingUser?.username}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>New Password</Form.Label>
-              <Form.Control
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                autoFocus
-                placeholder="Enter new password"
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleResetClose}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleResetPassword}>
-            Confirm Reset
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <Dialog open={showResetModal} onClose={handleResetClose}>
+        <DialogTitle>Reset Password for {resettingUser?.username}</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="newPassword"
+            label="New Password"
+            type="password"
+            fullWidth
+            variant="standard"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="Enter new password"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleResetClose}>Cancel</Button>
+          <Button onClick={handleResetPassword}>Confirm Reset</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* User Details Modal */}
-      <Modal show={showDetailsModal} onHide={handleDetailsClose} size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>User Details: {selectedUserDetail?.user.username}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-            {detailsLoading && <div className="text-center"><Spinner animation="border" size="sm" /> Loading details...</div>}
-            {detailsError && <Alert variant="danger">{detailsError}</Alert>}
+      <Dialog open={showDetailsModal} onClose={handleDetailsClose} maxWidth="md" fullWidth>
+        <DialogTitle>User Details: {selectedUserDetail?.user.username}</DialogTitle>
+        <DialogContent dividers>
+            {detailsLoading && <Box sx={{ textAlign: 'center' }}><CircularProgress size="sm" /> <Typography variant="body2">Loading details...</Typography></Box>}
+            {detailsError && <Alert severity="error">{detailsError}</Alert>}
             {selectedUserDetail && (
-                <div>
-                    <Card className="mb-3">
-                        <Card.Header>User Information</Card.Header>
-                        <ListGroup variant="flush">
-                            <ListGroup.Item>ID: {selectedUserDetail.user.id}</ListGroup.Item>
-                            <ListGroup.Item>Username: {selectedUserDetail.user.username}</ListGroup.Item>
-                            <ListGroup.Item>Email: {selectedUserDetail.user.email}</ListGroup.Item>
-                            <ListGroup.Item>Role: {selectedUserDetail.user.role}</ListGroup.Item>
-                        </ListGroup>
+                <Box>
+                    <Card sx={{ mb: 3 }}>
+                        <CardHeader title="User Information" />
+                        <List dense>
+                            <ListItem><ListItemText primary={`ID: ${selectedUserDetail.user.id}`} /></ListItem>
+                            <ListItem><ListItemText primary={`Username: ${selectedUserDetail.user.username}`} /></ListItem>
+                            <ListItem><ListItemText primary={`Email: ${selectedUserDetail.user.email}`} /></ListItem>
+                            <ListItem><ListItemText primary={`Role: ${selectedUserDetail.user.role}`} /></ListItem>
+                        </List>
                     </Card>
 
-                    <Card className="mb-3">
-                        <Card.Header>Posts by {selectedUserDetail.user.username}</Card.Header>
+                    <Card sx={{ mb: 3 }}>
+                        <CardHeader title={`Posts by ${selectedUserDetail.user.username}`} />
+                        <CardContent>
                         {selectedUserDetail.posts.length > 0 ? (
-                            <ListGroup variant="flush">
+                            <List dense>
                                 {selectedUserDetail.posts.map(post => (
-                                    <ListGroup.Item key={post.id}>
-                                        <Link to={`/board/${post.id}`} onClick={handleDetailsClose}>
-                                            {post.title} {post.secret && '(비밀글)'}
-                                        </Link>
-                                    </ListGroup.Item>
+                                    <ListItem key={post.id} component={RouterLink} to={`/board/${post.id}`} onClick={handleDetailsClose}>
+                                        <ListItemText primary={`${post.title} ${post.secret ? '(비밀글)' : ''}`} />
+                                    </ListItem>
                                 ))}
-                            </ListGroup>
+                            </List>
                         ) : (
-                            <Card.Body>No posts found.</Card.Body>
+                            <Typography variant="body2">No posts found.</Typography>
                         )}
+                        </CardContent>
                     </Card>
 
                     <Card>
-                        <Card.Header>Comments by {selectedUserDetail.user.username}</Card.Header>
+                        <CardHeader title={`Comments by ${selectedUserDetail.user.username}`} />
+                        <CardContent>
                         {selectedUserDetail.comments.length > 0 ? (
-                            <ListGroup variant="flush">
+                            <List dense>
                                 {selectedUserDetail.comments.map(comment => (
-                                    <ListGroup.Item key={comment.id}>
-                                        <Link to={`/board/${comment.postId}`} onClick={handleDetailsClose}>
-                                            {comment.content.substring(0, 50)}...
-                                            <small className="text-muted ms-2"> (on Post ID: {comment.postId})</small>
-                                        </Link>
-                                    </ListGroup.Item>
+                                    <ListItem key={comment.id} component={RouterLink} to={`/board/${comment.postId}`} onClick={handleDetailsClose}>
+                                        <ListItemText
+                                            primary={`${comment.content.substring(0, 50)}${comment.content.length > 50 ? '...' : ''}`}
+                                            secondary={`(on Post ID: ${comment.postId})`}
+                                        />
+                                    </ListItem>
                                 ))}
-                            </ListGroup>
+                            </List>
                         ) : (
-                            <Card.Body>No comments found.</Card.Body>
+                            <Typography variant="body2">No comments found.</Typography>
                         )}
+                        </CardContent>
                     </Card>
-                </div>
+                </Box>
             )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleDetailsClose}>
-            Close
-          </Button>
-        </Modal.Footer>
-      </Modal>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDetailsClose}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

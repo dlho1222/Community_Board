@@ -1,10 +1,30 @@
 import React, { useState, useEffect, useContext, useCallback, useRef } from 'react';
-import { Container, Table, Button, Form, FormControl, InputGroup, Alert, Spinner, Pagination } from 'react-bootstrap';
+import { useNavigate, Link } from 'react-router-dom';
 import postApi from '../api/postApi';
 import type { PostResponse, Page } from '../api/postApi';
 import { AuthContext } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import lockIcon from '../assets/lock_icon.png';
+
+// MUI Components
+import {
+    Container,
+    Box,
+    TextField,
+    Button,
+    Alert,
+    CircularProgress,
+    Typography,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Paper,
+    Pagination,
+    InputAdornment,
+} from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
 
 const useDebounce = (value: string, delay: number) => {
     const [debouncedValue, setDebouncedValue] = useState(value);
@@ -22,12 +42,54 @@ const useDebounce = (value: string, delay: number) => {
     return debouncedValue;
 };
 
+// Memoized Search Input Component to prevent BoardListPage re-rendering on every keystroke
+interface MemoizedSearchInputProps {
+    searchTerm: string;
+    setSearchTerm: (term: string) => void;
+    handleSearchSubmit: (e: React.FormEvent) => void;
+    searchInputRef: React.RefObject<HTMLInputElement | null>;
+    loading: boolean;
+}
+
+const MemoizedSearchInput: React.FC<MemoizedSearchInputProps> = React.memo(({
+    searchTerm,
+    setSearchTerm,
+    handleSearchSubmit,
+    searchInputRef,
+    loading,
+}) => (
+    <Box component="form" onSubmit={handleSearchSubmit} sx={{ width: '300px' }}>
+        <TextField
+            fullWidth
+            label="Search posts by title..."
+            variant="outlined"
+            size="small"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{
+                startAdornment: (
+                    <InputAdornment position="start">
+                        <SearchIcon />
+                    </InputAdornment>
+                ),
+                endAdornment: (
+                    <InputAdornment position="end">
+                        <Button onClick={handleSearchSubmit} variant="text" size="small" disabled={loading}>Search</Button>
+                    </InputAdornment>
+                ),
+            }}
+            disabled={loading}
+            inputRef={searchInputRef}
+        />
+    </Box>
+));
+
 const BoardListPage: React.FC = () => {
     const [posts, setPosts] = useState<PostResponse[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState<string>('');
-    const [currentPage, setCurrentPage] = useState<number>(0);
+    const [currentPage, setCurrentPage] = useState<number>(1); // MUI Pagination is 1-indexed
     const [pageSize] = useState<number>(10);
     const [totalPages, setTotalPages] = useState<number>(0);
     const [totalElements, setTotalElements] = useState<number>(0);
@@ -38,7 +100,9 @@ const BoardListPage: React.FC = () => {
     const isAdmin = user?.role === 'ADMIN';
 
     const debouncedSearchTerm = useDebounce(searchTerm, 500);
-    const searchInputRef = useRef<HTMLInputElement>(null); // 검색 입력 필드용 ref 생성
+    const searchInputRef = useRef<HTMLInputElement>(null);
+    // FIX: Move useRef declaration to top-level
+    const prevDebouncedSearchTermRef = useRef(''); // Initialize with empty string, will be updated in useEffect
 
     const fetchPosts = useCallback(async (keyword?: string, page: number = 0, size: number = 10) => {
         try {
@@ -54,7 +118,7 @@ const BoardListPage: React.FC = () => {
             }
             setPosts(pageData.content);
             setTotalPages(pageData.totalPages);
-            setCurrentPage(pageData.number);
+            setCurrentPage(pageData.number + 1); // Adjust for 1-indexed MUI Pagination
             setTotalElements(pageData.totalElements);
         } catch (err: any) {
             console.error('Failed to fetch posts:', err);
@@ -64,14 +128,26 @@ const BoardListPage: React.FC = () => {
         }
     }, [user?.id, isAdmin]);
 
+    // Effect to reset currentPage to 1 when debouncedSearchTerm changes
+    // This ensures new searches start from the first page, but pagination doesn't reset active searches.
     useEffect(() => {
-        if (debouncedSearchTerm) {
-            setCurrentPage(0);
+        // Check if `debouncedSearchTerm` has really changed from the previous effective search.
+        if (debouncedSearchTerm !== prevDebouncedSearchTermRef.current) {
+            if (currentPage !== 1) { // Only reset if not already on the first page
+                setCurrentPage(1);
+            }
+            // Update the ref to track the currently applied debounced search term for the next comparison
+            prevDebouncedSearchTermRef.current = debouncedSearchTerm;
         }
-        fetchPosts(debouncedSearchTerm, currentPage, pageSize);
+    }, [debouncedSearchTerm, currentPage]);
+
+
+    // Effect to fetch posts when debouncedSearchTerm or currentPage changes
+    useEffect(() => {
+        const apiPage = currentPage - 1; // Convert 1-indexed UI page to 0-indexed API page
+        fetchPosts(debouncedSearchTerm, apiPage, pageSize);
     }, [debouncedSearchTerm, currentPage, pageSize, fetchPosts]);
 
-    // 로딩이 완료된 후 검색 입력 필드에 포커스를 다시 설정
     useEffect(() => {
         if (!loading && searchInputRef.current && document.activeElement !== searchInputRef.current) {
             searchInputRef.current.focus();
@@ -81,98 +157,97 @@ const BoardListPage: React.FC = () => {
     const handleWritePost = () => {
         navigate('/board/write');
     };
-
-    const handlePostClick = (id: number) => {
-        navigate(`/board/${id}`);
-    };
-
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setCurrentPage(0);
-        fetchPosts(searchTerm, 0, pageSize);
+        // When submitting directly, the debouncedSearchTerm might not have caught up yet.
+        // So, explicitly trigger a fetch with the current searchTerm and reset page.
+        setCurrentPage(1); // Reset to first page (1-indexed)
+        fetchPosts(searchTerm, 0, pageSize); // API is 0-indexed
     };
 
-    const handlePageChange = (pageNumber: number) => {
-        setCurrentPage(pageNumber);
+    const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+        setCurrentPage(value);
     };
 
     if (loading) {
         return (
-            <Container className="mt-4 text-center">
-                <Spinner animation="border" role="status">
-                    <span className="visually-hidden">Loading posts...</span>
-                </Spinner>
+            <Container sx={{ mt: 4, textAlign: 'center' }}>
+                <CircularProgress />
+                <Typography>Loading posts...</Typography>
             </Container>
         );
     }
 
     if (error) {
         return (
-            <Container className="mt-4">
-                <Alert variant="danger">{error}</Alert>
+            <Container sx={{ mt: 4 }}>
+                <Alert severity="error">{error}</Alert>
             </Container>
         );
     }
 
     return (
-        <Container className="mt-4">
-            <h2 className="mb-4">Community Board</h2>
+        <Container sx={{ mt: 4 }}>
+            <Typography variant="h4" component="h2" gutterBottom>Community Board</Typography>
 
-            <div className="d-flex justify-content-between mb-3">
-                <Form onSubmit={handleSearchSubmit}>
-                    <InputGroup style={{ width: '300px' }}>
-                        <FormControl
-                            ref={searchInputRef} // ref 연결
-                            placeholder="Search posts by title..."
-                            aria-label="Search posts"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                        <Button variant="outline-secondary" type="submit">Search</Button>
-                    </InputGroup>
-                </Form>
-                <Button variant="primary" onClick={handleWritePost}>Write Post</Button>
-            </div>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+                <MemoizedSearchInput
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
+                    handleSearchSubmit={handleSearchSubmit}
+                    searchInputRef={searchInputRef}
+                    loading={loading}
+                />
+                <Button variant="contained" onClick={handleWritePost}>Write Post</Button>
+            </Box>
 
-            <Table striped bordered hover responsive>
-                <thead>
-                <tr>
-                    <th>Seq</th>
-                    <th>Title</th>
-                    <th>Author</th>
-                    <th>Date</th>
-                    <th>Secret</th>
-                </tr>
-                </thead>
-                <tbody>
-                {posts.map((post, index) => (
-                    <tr key={post.id}>
-                        <td>{totalElements - (currentPage * pageSize + index)}</td>
-                        <td>
-                            <a href="#" onClick={(e) => { e.preventDefault(); handlePostClick(post.id); }}>
-                                {post.title}
-                            </a>
-                        </td>
-                        <td>{post.authorName}</td>
-                        <td>{new Date(post.createdAt).toLocaleDateString()}</td>
-                        <td>
-                            {post.secret && <img src={lockIcon} alt="Secret" style={{ width: '20px', height: '20px' }} />}
-                        </td>
-                    </tr>
-                ))}
-                </tbody>
-            </Table>
+            <TableContainer component={Paper}>
+                <Table sx={{ minWidth: 650 }} aria-label="simple table">
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>Seq</TableCell>
+                            <TableCell>Title</TableCell>
+                            <TableCell>Author</TableCell>
+                            <TableCell>Date</TableCell>
+                            <TableCell>Secret</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {posts.map((post, index) => (
+                            <TableRow
+                                key={post.id}
+                                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                            >
+                                <TableCell component="th" scope="row">
+                                    {totalElements - ((currentPage - 1) * pageSize + index)}
+                                </TableCell>
+                                <TableCell>
+                                    <Link to={`/board/${post.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                        {post.title}
+                                    </Link>
+                                </TableCell>
+                                <TableCell>{post.authorName}</TableCell>
+                                <TableCell>{new Date(post.createdAt).toLocaleDateString()}</TableCell>
+                                <TableCell>
+                                    {post.secret && <img src={lockIcon} alt="Secret" style={{ width: '20px', height: '20px' }} />}
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
 
             {totalPages > 1 && (
-                <Pagination className="justify-content-center mt-4">
-                    <Pagination.Prev onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 0} />
-                    {[...Array(totalPages)].map((_, i) => (
-                        <Pagination.Item key={i} active={i === currentPage} onClick={() => handlePageChange(i)}>
-                            {i + 1}
-                        </Pagination.Item>
-                    ))}
-                    <Pagination.Next onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages - 1} />
-                </Pagination>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                    <Pagination
+                        count={totalPages}
+                        page={currentPage}
+                        onChange={handlePageChange}
+                        color="primary"
+                        showFirstButton
+                        showLastButton
+                    />
+                </Box>
             )}
         </Container>
     );
