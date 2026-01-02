@@ -136,7 +136,7 @@ const BoardListPage: React.FC = () => {
             <Table striped bordered hover responsive>
                 <thead>
                 <tr>
-                    <th>#</th>
+                    <th>Seq</th>
                     <th>Title</th>
                     <th>Author</th>
                     <th>Date</th>

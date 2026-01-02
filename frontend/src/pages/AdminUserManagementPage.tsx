@@ -176,7 +176,7 @@ const AdminUserManagementPage: React.FC = () => {
         <Table striped bordered hover responsive>
           <thead>
             <tr>
-              <th>#</th>
+              <th>Id</th>
               <th>Username</th>
               <th>Email</th>
               <th>Role</th>
@@ -193,7 +193,7 @@ const AdminUserManagementPage: React.FC = () => {
                 <td>
                   <Button variant="primary" size="sm" className="me-2" onClick={() => handleViewDetailsClick(user)} disabled={detailsLoading}>View Details</Button>
                   <Button variant="info" size="sm" className="me-2" onClick={() => handleEditClick(user)} disabled={detailsLoading}>Edit Username</Button>
-                  <Button variant="warning" size="sm" onClick={() => handleResetClick(user)} disabled={detailsLoading}>Reset Password</Button>
+                  <Button variant="warning" size="sm" onClick={() => handleResetClick(user)} disabled={detailsLoading}>Edit Password</Button>
                 </td>
               </tr>
             ))}
