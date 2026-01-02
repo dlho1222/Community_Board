@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Container, Table, Button, Alert, Spinner, Badge, Pagination } from 'react-bootstrap';
+import { Container, Table, Button, Alert, Spinner, Pagination } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import adminApi from '../api/adminApi';
 import type { PostResponse, Page } from '../api/postApi'; // Import Page type
+import lockIcon from '../assets/lock_icon.png';
 
 const AdminPostManagementPage: React.FC = () => {
   const [posts, setPosts] = useState<PostResponse[]>([]);
@@ -115,7 +116,7 @@ const AdminPostManagementPage: React.FC = () => {
               <td>{post.authorName}</td>
               <td>{new Date(post.createdAt).toLocaleDateString()}</td>
               <td>
-                {post.secret && <Badge bg="secondary">Secret</Badge>}
+                {post.secret && <img src={lockIcon} alt="Secret" style={{ width: '20px', height: '20px' }} />}
               </td>
               <td>
                 <Button variant="info" size="sm" className="me-2" onClick={() => navigate(`/board/${post.id}`)}>View</Button>

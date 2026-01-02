@@ -4,6 +4,7 @@ import postApi from '../api/postApi';
 import type { PostResponse, Page } from '../api/postApi';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import lockIcon from '../assets/lock_icon.png';
 
 const useDebounce = (value: string, delay: number) => {
     const [debouncedValue, setDebouncedValue] = useState(value);
@@ -154,7 +155,9 @@ const BoardListPage: React.FC = () => {
                         </td>
                         <td>{post.authorName}</td>
                         <td>{new Date(post.createdAt).toLocaleDateString()}</td>
-                        <td>{post.secret ? 'Yes' : 'No'}</td>
+                        <td>
+                            {post.secret && <img src={lockIcon} alt="Secret" style={{ width: '20px', height: '20px' }} />}
+                        </td>
                     </tr>
                 ))}
                 </tbody>
