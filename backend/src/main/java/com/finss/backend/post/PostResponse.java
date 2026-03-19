@@ -31,4 +31,22 @@ public class PostResponse {
                 .secret(post.isSecret())
                 .build();
     }
+
+    public static PostResponse fromEntityProtected(Post post, Long currentUserId, boolean isAdmin) {
+        if (post.isSecret()) {
+            if (!isAdmin && (currentUserId == null || !currentUserId.equals(post.getUser().getId()))) {
+                return PostResponse.builder()
+                        .id(post.getId())
+                        .title("비밀글입니다.")
+                        .content("")
+                        .authorId(post.getUser().getId())
+                        .authorName(post.getUser().getUsername())
+                        .createdAt(post.getCreatedAt())
+                        .updatedAt(post.getUpdatedAt())
+                        .secret(true)
+                        .build();
+            }
+        }
+        return fromEntity(post);
+    }
 }

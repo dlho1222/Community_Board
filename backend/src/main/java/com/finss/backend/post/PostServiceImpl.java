@@ -61,24 +61,7 @@ public class PostServiceImpl implements PostService {
     @Override
     public Page<PostResponse> getAllPosts(Long currentUserId, boolean isAdmin, Pageable pageable) {
         Page<Post> postsPage = postRepository.findAll(pageable);
-
-        return postsPage.map(post -> {
-            if (post.isSecret()) {
-                if (!isAdmin && (currentUserId == null || !currentUserId.equals(post.getUser().getId()))) {
-                    return PostResponse.builder()
-                            .id(post.getId())
-                            .title("비밀글입니다.")
-                            .content("")
-                            .authorId(post.getUser().getId())
-                            .authorName(post.getUser().getUsername())
-                            .createdAt(post.getCreatedAt())
-                            .updatedAt(post.getUpdatedAt())
-                            .secret(true)
-                            .build();
-                }
-            }
-            return PostResponse.fromEntity(post);
-        });
+        return postsPage.map(post -> PostResponse.fromEntityProtected(post, currentUserId, isAdmin));
     }
 
     @Override
@@ -117,24 +100,7 @@ public class PostServiceImpl implements PostService {
     @Transactional(readOnly = true)
     public Page<PostResponse> searchPostsByTitle(String keyword, Long currentUserId, boolean isAdmin, Pageable pageable) {
         Page<Post> postsPage = postRepository.findByTitleContainingIgnoreCase(keyword, pageable);
-
-        return postsPage.map(post -> {
-            if (post.isSecret()) {
-                if (!isAdmin && (currentUserId == null || !currentUserId.equals(post.getUser().getId()))) {
-                    return PostResponse.builder()
-                            .id(post.getId())
-                            .title("비밀글입니다.")
-                            .content("")
-                            .authorId(post.getUser().getId())
-                            .authorName(post.getUser().getUsername())
-                            .createdAt(post.getCreatedAt())
-                            .updatedAt(post.getUpdatedAt())
-                            .secret(true)
-                            .build();
-                }
-            }
-            return PostResponse.fromEntity(post);
-        });
+        return postsPage.map(post -> PostResponse.fromEntityProtected(post, currentUserId, isAdmin));
     }
 
     @Override
@@ -143,23 +109,7 @@ public class PostServiceImpl implements PostService {
         List<Post> posts = postRepository.findByUserIdOrderByCreatedAtDesc(userId);
 
         return posts.stream()
-                .map(post -> {
-                    if (post.isSecret()) {
-                        if (!isAdmin && (currentUserId == null || !currentUserId.equals(post.getUser().getId()))) {
-                            return PostResponse.builder()
-                                    .id(post.getId())
-                                    .title("비밀글입니다.")
-                                    .content("")
-                                    .authorId(post.getUser().getId())
-                                    .authorName(post.getUser().getUsername())
-                                    .createdAt(post.getCreatedAt())
-                                    .updatedAt(post.getUpdatedAt())
-                                    .secret(true)
-                                    .build();
-                        }
-                    }
-                    return PostResponse.fromEntity(post);
-                })
+                .map(post -> PostResponse.fromEntityProtected(post, currentUserId, isAdmin))
                 .collect(Collectors.toList());
     }
 }
