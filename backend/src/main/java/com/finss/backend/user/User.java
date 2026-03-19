@@ -23,7 +23,7 @@ import java.util.List;
 public class User {
 
     @Id
-    //@GeneratedValue == AUTO_INCREAMENT
+    //@GeneratedValue == AUTO_INCREMENT
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 

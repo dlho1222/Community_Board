@@ -26,32 +26,45 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<UserResponse> loginUser(@Valid @RequestBody UserLoginRequest request, HttpSession session) {
-        UserResponse userResponse = userService.login(request);
-        session.setAttribute("userId", userResponse.getId());
+        User user = userService.loginWithUser(request); // User 객체를 반환하는 서비스 메서드 호출
+        session.setAttribute("loginUser", user); // 세션에 'loginUser'로 객체 저장
+        
+        UserResponse userResponse = UserResponse.fromEntity(user);
         return ResponseEntity.ok(userResponse);
     }
 
     @PostMapping("/logout")
     public ResponseEntity<String> logoutUser(HttpSession session) {
-        session.invalidate();
+        session.invalidate(); // 세션 무효화 (모든 정보 삭제)
         return ResponseEntity.ok("로그아웃 되었습니다.");
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @Valid @RequestBody UserUpdateRequest request) {
+    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, 
+                                                   @Valid @RequestBody UserUpdateRequest request,
+                                                   HttpSession session) {
+        //로그인된 사용자 본인이 맞는지 확인 (인가 취약점 방어)
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null || (!loginUser.getId().equals(id) && !"ADMIN".equals(loginUser.getRole()))) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         UserResponse updatedUser = userService.update(id, request);
         return ResponseEntity.ok(updatedUser);
     }
 
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getMe(HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
+        //세션에서 로그인 정보를 직접 꺼냄
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        UserResponse userResponse = userService.findById(userId);
+
+        UserResponse userResponse = UserResponse.fromEntity(loginUser);
         return ResponseEntity.ok(userResponse);
-    }
+        }
+
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException e) {
