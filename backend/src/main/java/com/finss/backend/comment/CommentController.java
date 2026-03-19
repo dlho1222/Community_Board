@@ -1,6 +1,7 @@
 package com.finss.backend.comment;
 
 import com.finss.backend.common.AccessDeniedException;
+import com.finss.backend.user.User;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,45 +18,58 @@ public class CommentController {
 
     private final CommentService commentService;
 
+    private User getLoginUser(HttpSession session) {
+        return (User) session.getAttribute("loginUser");
+    }
+
     @PostMapping
     public ResponseEntity<CommentResponse> createComment(
             @Valid @RequestBody CommentCreateRequest request,
-            HttpSession session,
-            @RequestParam(defaultValue = "false") boolean isAdmin) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
+            HttpSession session) {
+        User loginUser = getLoginUser(session);
+        if (loginUser == null) {
             throw new AccessDeniedException("로그인이 필요합니다.");
         }
-        CommentResponse createdComment = commentService.createComment(request, userId, isAdmin);
+        boolean isAdmin = "ADMIN".equals(loginUser.getRole());
+        CommentResponse createdComment = commentService.createComment(request, loginUser.getId(), isAdmin);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdComment);
     }
 
     @GetMapping("/post/{postId}")
     public ResponseEntity<List<CommentResponse>> getCommentsByPostId(
             @PathVariable Long postId,
-            HttpSession session,
-            @RequestParam(defaultValue = "false") boolean isAdmin) {
-        Long currentUserId = (Long) session.getAttribute("userId");
+            HttpSession session) {
+        User loginUser = getLoginUser(session);
+        Long currentUserId = loginUser != null ? loginUser.getId() : null;
+        boolean isAdmin = loginUser != null && "ADMIN".equals(loginUser.getRole());
+        
         List<CommentResponse> comments = commentService.getCommentsByPostId(postId, currentUserId, isAdmin);
         return ResponseEntity.ok(comments);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CommentResponse> updateComment(@PathVariable Long id, @RequestBody String content) {
-        CommentResponse updatedComment = commentService.updateComment(id, content);
+    public ResponseEntity<CommentResponse> updateComment(@PathVariable Long id, @RequestBody String content, HttpSession session) {
+        User loginUser = getLoginUser(session);
+        if (loginUser == null) {
+            throw new AccessDeniedException("로그인이 필요합니다.");
+        }
+        
+        // [보안 점검] 작성자 본인 확인 (서비스에서 처리하지만 컨트롤러에서도 1차 방어 가능)
+        CommentResponse updatedComment = commentService.updateComment(id, content, loginUser.getId());
         return ResponseEntity.ok(updatedComment);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteComment(
             @PathVariable Long id,
-            HttpSession session,
-            @RequestParam(defaultValue = "false") boolean isAdmin) {
-        Long currentUserId = (Long) session.getAttribute("userId");
-        if (currentUserId == null) {
+            HttpSession session) {
+        User loginUser = getLoginUser(session);
+        if (loginUser == null) {
             throw new AccessDeniedException("로그인이 필요합니다.");
         }
-        commentService.deleteComment(id, currentUserId, isAdmin);
+        boolean isAdmin = "ADMIN".equals(loginUser.getRole());
+
+        commentService.deleteComment(id, loginUser.getId(), isAdmin);
         return ResponseEntity.noContent().build();
     }
 

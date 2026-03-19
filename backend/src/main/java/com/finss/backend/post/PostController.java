@@ -1,6 +1,7 @@
 package com.finss.backend.post;
 
 import com.finss.backend.common.AccessDeniedException;
+import com.finss.backend.user.User;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,22 +18,28 @@ public class PostController {
 
     private final PostService postService;
 
+    private User getLoginUser(HttpSession session) {
+        return (User) session.getAttribute("loginUser");
+    }
+
     @PostMapping
     public ResponseEntity<PostResponse> createPost(@Valid @RequestBody PostCreateRequest request, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
+        User loginUser = getLoginUser(session);
+        if (loginUser == null) {
             throw new AccessDeniedException("로그인이 필요합니다.");
         }
-        PostResponse createdPost = postService.createPost(request, userId);
+        PostResponse createdPost = postService.createPost(request, loginUser.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(createdPost);
     }
 
     @GetMapping
     public ResponseEntity<Page<PostResponse>> getAllPosts(
             HttpSession session,
-            @RequestParam(defaultValue = "false") boolean isAdmin,
             Pageable pageable) {
-        Long currentUserId = (Long) session.getAttribute("userId");
+        User loginUser = getLoginUser(session);
+        Long currentUserId = loginUser != null ? loginUser.getId() : null;
+        boolean isAdmin = loginUser != null && "ADMIN".equals(loginUser.getRole());
+        
         Page<PostResponse> posts = postService.getAllPosts(currentUserId, isAdmin, pageable);
         return ResponseEntity.ok(posts);
     }
@@ -40,9 +47,11 @@ public class PostController {
     @GetMapping("/{id}")
     public ResponseEntity<PostResponse> getPostById(
             @PathVariable Long id,
-            HttpSession session,
-            @RequestParam(defaultValue = "false") boolean isAdmin) {
-        Long currentUserId = (Long) session.getAttribute("userId");
+            HttpSession session) {
+        User loginUser = getLoginUser(session);
+        Long currentUserId = loginUser != null ? loginUser.getId() : null;
+        boolean isAdmin = loginUser != null && "ADMIN".equals(loginUser.getRole());
+
         PostResponse post = postService.getPostById(id, currentUserId, isAdmin);
         return ResponseEntity.ok(post);
     }
@@ -51,26 +60,28 @@ public class PostController {
     public ResponseEntity<PostResponse> updatePost(
             @PathVariable Long id,
             @Valid @RequestBody PostUpdateRequest request,
-            HttpSession session,
-            @RequestParam(defaultValue = "false") boolean isAdmin) {
-        Long currentUserId = (Long) session.getAttribute("userId");
-        if (currentUserId == null) {
+            HttpSession session) {
+        User loginUser = getLoginUser(session);
+        if (loginUser == null) {
             throw new AccessDeniedException("로그인이 필요합니다.");
         }
-        PostResponse updatedPost = postService.updatePost(id, request, currentUserId, isAdmin);
+        boolean isAdmin = "ADMIN".equals(loginUser.getRole());
+        
+        PostResponse updatedPost = postService.updatePost(id, request, loginUser.getId(), isAdmin);
         return ResponseEntity.ok(updatedPost);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePost(
             @PathVariable Long id,
-            HttpSession session,
-            @RequestParam(defaultValue = "false") boolean isAdmin) {
-        Long currentUserId = (Long) session.getAttribute("userId");
-        if (currentUserId == null) {
+            HttpSession session) {
+        User loginUser = getLoginUser(session);
+        if (loginUser == null) {
             throw new AccessDeniedException("로그인이 필요합니다.");
         }
-        postService.deletePost(id, currentUserId, isAdmin);
+        boolean isAdmin = "ADMIN".equals(loginUser.getRole());
+
+        postService.deletePost(id, loginUser.getId(), isAdmin);
         return ResponseEntity.noContent().build();
     }
 
@@ -78,9 +89,11 @@ public class PostController {
     public ResponseEntity<Page<PostResponse>> searchPostsByTitle(
             @RequestParam String keyword,
             HttpSession session,
-            @RequestParam(defaultValue = "false") boolean isAdmin,
             Pageable pageable) {
-        Long currentUserId = (Long) session.getAttribute("userId");
+        User loginUser = getLoginUser(session);
+        Long currentUserId = loginUser != null ? loginUser.getId() : null;
+        boolean isAdmin = loginUser != null && "ADMIN".equals(loginUser.getRole());
+
         Page<PostResponse> posts = postService.searchPostsByTitle(keyword, currentUserId, isAdmin, pageable);
         return ResponseEntity.ok(posts);
     }

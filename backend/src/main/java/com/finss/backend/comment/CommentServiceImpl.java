@@ -62,9 +62,14 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    public CommentResponse updateComment(Long id, String content) {
+    public CommentResponse updateComment(Long id, String content, Long userId) {
         Comment existingComment = commentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Comment not found with id: " + id));
+
+        //작성자 본인인지 확인
+        if (!existingComment.getUser().getId().equals(userId)) {
+            throw new AccessDeniedException("댓글을 수정할 권한이 없습니다.");
+        }
 
         existingComment.setContent(content);
 
