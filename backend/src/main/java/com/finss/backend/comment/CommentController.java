@@ -1,7 +1,9 @@
 package com.finss.backend.comment;
 
 import com.finss.backend.common.AccessDeniedException;
+import com.finss.backend.common.SessionConstants;
 import com.finss.backend.user.User;
+import com.finss.backend.user.UserRole;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +21,7 @@ public class CommentController {
     private final CommentService commentService;
 
     private User getLoginUser(HttpSession session) {
-        return (User) session.getAttribute("loginUser");
+        return (User) session.getAttribute(SessionConstants.LOGIN_USER);
     }
 
     @PostMapping
@@ -30,7 +32,7 @@ public class CommentController {
         if (loginUser == null) {
             throw new AccessDeniedException("로그인이 필요합니다.");
         }
-        boolean isAdmin = "ADMIN".equals(loginUser.getRole());
+        boolean isAdmin = UserRole.ADMIN.name().equals(loginUser.getRole());
         CommentResponse createdComment = commentService.createComment(request, loginUser.getId(), isAdmin);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdComment);
     }
@@ -41,7 +43,7 @@ public class CommentController {
             HttpSession session) {
         User loginUser = getLoginUser(session);
         Long currentUserId = loginUser != null ? loginUser.getId() : null;
-        boolean isAdmin = loginUser != null && "ADMIN".equals(loginUser.getRole());
+        boolean isAdmin = loginUser != null && UserRole.ADMIN.name().equals(loginUser.getRole());
         
         List<CommentResponse> comments = commentService.getCommentsByPostId(postId, currentUserId, isAdmin);
         return ResponseEntity.ok(comments);
@@ -67,7 +69,7 @@ public class CommentController {
         if (loginUser == null) {
             throw new AccessDeniedException("로그인이 필요합니다.");
         }
-        boolean isAdmin = "ADMIN".equals(loginUser.getRole());
+        boolean isAdmin = UserRole.ADMIN.name().equals(loginUser.getRole());
 
         commentService.deleteComment(id, loginUser.getId(), isAdmin);
         return ResponseEntity.noContent().build();

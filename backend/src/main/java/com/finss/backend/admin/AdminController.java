@@ -1,9 +1,11 @@
 package com.finss.backend.admin;
 
+import com.finss.backend.common.SessionConstants;
 import com.finss.backend.post.PostResponse;
 import com.finss.backend.post.PostService;
 import com.finss.backend.user.User;
 import com.finss.backend.user.UserResponse;
+import com.finss.backend.user.UserRole;
 import com.finss.backend.user.UserService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +26,8 @@ public class AdminController {
     private final PostService postService;
 
     private User getLoginAdmin(HttpSession session) {
-        User loginUser = (User) session.getAttribute("loginUser");
-        if (loginUser == null || !"ADMIN".equals(loginUser.getRole())) {
+        User loginUser = (User) session.getAttribute(SessionConstants.LOGIN_USER);
+        if (loginUser == null || !UserRole.ADMIN.name().equals(loginUser.getRole())) {
             return null;
         }
         return loginUser;

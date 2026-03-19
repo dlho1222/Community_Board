@@ -34,9 +34,9 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
 
-        String role = "admin".equalsIgnoreCase(request.getUsername()) ? "ADMIN" : "USER";
+        String role = "admin".equalsIgnoreCase(request.getUsername()) ? UserRole.ADMIN.name() : UserRole.USER.name();
         
-                User newUser = User.builder()
+        User newUser = User.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .email(request.getEmail())

@@ -1,5 +1,6 @@
 package com.finss.backend.user;
 
+import com.finss.backend.common.SessionConstants;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,8 +28,8 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<UserResponse> loginUser(@Valid @RequestBody UserLoginRequest request, HttpSession session) {
         User user = userService.loginWithUser(request); // User 객체를 반환하는 서비스 메서드 호출
-        session.setAttribute("loginUser", user); // 세션에 'loginUser'로 객체 저장
-        
+        session.setAttribute(SessionConstants.LOGIN_USER, user); // 세션에 'loginUser'로 객체 저장
+
         UserResponse userResponse = UserResponse.fromEntity(user);
         return ResponseEntity.ok(userResponse);
     }
@@ -44,8 +45,8 @@ public class UserController {
                                                    @Valid @RequestBody UserUpdateRequest request,
                                                    HttpSession session) {
         //로그인된 사용자 본인이 맞는지 확인 (인가 취약점 방어)
-        User loginUser = (User) session.getAttribute("loginUser");
-        if (loginUser == null || (!loginUser.getId().equals(id) && !"ADMIN".equals(loginUser.getRole()))) {
+        User loginUser = (User) session.getAttribute(SessionConstants.LOGIN_USER);
+        if (loginUser == null || (!loginUser.getId().equals(id) && !UserRole.ADMIN.name().equals(loginUser.getRole()))) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -56,14 +57,15 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getMe(HttpSession session) {
         //세션에서 로그인 정보를 직접 꺼냄
-        User loginUser = (User) session.getAttribute("loginUser");
+        User loginUser = (User) session.getAttribute(SessionConstants.LOGIN_USER);
         if (loginUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         UserResponse userResponse = UserResponse.fromEntity(loginUser);
         return ResponseEntity.ok(userResponse);
-        }
+    }
+
 
 
     @ExceptionHandler(IllegalArgumentException.class)

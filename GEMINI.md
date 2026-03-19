@@ -10,7 +10,7 @@
 
 | 번호 | 점검 항목 | 위험도 | 상태 | 관련 파일 |
 | :--- | :--- | :---: | :---: | :--- |
-| **1** | **부적절한 인가 및 권한 관리** (Admin/isAdmin 삭제) | 🔴 높음 | 🔄 진행 중 | `AdminController`, `PostController` 등 |
+| **1** | **부적절한 인가 및 권한 관리** (Admin/isAdmin 삭제) | 🔴 높음 | ✅ **완료** | `AdminController`, `PostController`, `postApi.ts` 등 |
 | **2** | **파일 업로드/다운로드 보안** (웹쉘 방어) | 🔴 높음 | ⏳ 대기 | `FileStorageService` |
 | **3** | **입력값 검증 및 XSS 방어** (스크립트 실행 차단) | 🟠 중간 | ⏳ 대기 | `PostServiceImpl`, `CommentServiceImpl` |
 | **4** | **인증 및 세션 관리 강화** (SecurityConfig 설정) | 🟠 중간 | ⏳ 대기 | `SecurityConfig`, `UserController` |
@@ -23,11 +23,11 @@
 
 ## 🛠️ 상세 조치 가이드
 
-### 1. 부적절한 인가 및 권한 관리
+### 1. 부적절한 인가 및 권한 관리 (완료)
 - **문제:** `@RequestHeader` 및 `@RequestParam` 변조를 통해 관리자 권한 탈취 가능.
-- **해결:** 클라이언트 입력값 무시, 서버 `HttpSession` 기반 권한 체크 로직 구현.
+- **해결:** 
+    - 클라이언트 입력값(`X-USER-ID`, `isAdmin`) 싹 다 무시 및 삭제.
+    - 서버 `HttpSession` 기반의 `"loginUser"` 객체 활용 권한 체크 로직 전면 도입.
+    - 프런트엔드 API 호출 시 불필요한 인자 제거 및 세션 연동 완료.
 - **원리:** 클라이언트가 보내는 데이터는 모두 조작 가능하다고 가정하고, 서버 내부의 안전한 메모리(Session)만 신뢰한다.
 
-### 8. CSRF 방어 강화
-- **문제:** `csrf().disable()` 설정으로 인해 외부 사이트 요청 위조에 무방비함.
-- **해결:** Spring Security CSRF 보호 활성화 및 프런트엔드 Axios 인터셉터 연동.

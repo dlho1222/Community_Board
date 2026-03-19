@@ -1,7 +1,9 @@
 package com.finss.backend.post;
 
 import com.finss.backend.common.AccessDeniedException;
+import com.finss.backend.common.SessionConstants;
 import com.finss.backend.user.User;
+import com.finss.backend.user.UserRole;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +21,7 @@ public class PostController {
     private final PostService postService;
 
     private User getLoginUser(HttpSession session) {
-        return (User) session.getAttribute("loginUser");
+        return (User) session.getAttribute(SessionConstants.LOGIN_USER);
     }
 
     @PostMapping
@@ -38,7 +40,7 @@ public class PostController {
             Pageable pageable) {
         User loginUser = getLoginUser(session);
         Long currentUserId = loginUser != null ? loginUser.getId() : null;
-        boolean isAdmin = loginUser != null && "ADMIN".equals(loginUser.getRole());
+        boolean isAdmin = loginUser != null && UserRole.ADMIN.name().equals(loginUser.getRole());
         
         Page<PostResponse> posts = postService.getAllPosts(currentUserId, isAdmin, pageable);
         return ResponseEntity.ok(posts);
@@ -50,7 +52,7 @@ public class PostController {
             HttpSession session) {
         User loginUser = getLoginUser(session);
         Long currentUserId = loginUser != null ? loginUser.getId() : null;
-        boolean isAdmin = loginUser != null && "ADMIN".equals(loginUser.getRole());
+        boolean isAdmin = loginUser != null && UserRole.ADMIN.name().equals(loginUser.getRole());
 
         PostResponse post = postService.getPostById(id, currentUserId, isAdmin);
         return ResponseEntity.ok(post);
@@ -65,7 +67,7 @@ public class PostController {
         if (loginUser == null) {
             throw new AccessDeniedException("로그인이 필요합니다.");
         }
-        boolean isAdmin = "ADMIN".equals(loginUser.getRole());
+        boolean isAdmin = UserRole.ADMIN.name().equals(loginUser.getRole());
         
         PostResponse updatedPost = postService.updatePost(id, request, loginUser.getId(), isAdmin);
         return ResponseEntity.ok(updatedPost);
@@ -79,7 +81,7 @@ public class PostController {
         if (loginUser == null) {
             throw new AccessDeniedException("로그인이 필요합니다.");
         }
-        boolean isAdmin = "ADMIN".equals(loginUser.getRole());
+        boolean isAdmin = UserRole.ADMIN.name().equals(loginUser.getRole());
 
         postService.deletePost(id, loginUser.getId(), isAdmin);
         return ResponseEntity.noContent().build();
@@ -92,7 +94,7 @@ public class PostController {
             Pageable pageable) {
         User loginUser = getLoginUser(session);
         Long currentUserId = loginUser != null ? loginUser.getId() : null;
-        boolean isAdmin = loginUser != null && "ADMIN".equals(loginUser.getRole());
+        boolean isAdmin = loginUser != null && UserRole.ADMIN.name().equals(loginUser.getRole());
 
         Page<PostResponse> posts = postService.searchPostsByTitle(keyword, currentUserId, isAdmin, pageable);
         return ResponseEntity.ok(posts);
