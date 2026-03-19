@@ -7,6 +7,7 @@ import com.finss.backend.comment.CommentService;
 import com.finss.backend.post.PostResponse;
 import com.finss.backend.post.PostService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,13 +15,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor //DI를 위한 생성자 자동 생성
-@Transactional //메서드 실행 중에 예외가 발생되면 데이터베이스 변경 사항이 자동으로 '롤백' 되고 변경 사항을 모두 취소, 성공하면 '커밋'
+@RequiredArgsConstructor
+@Transactional
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PostService postService;
     private final CommentService commentService;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public void register(UserRegisterRequest request) {
@@ -33,10 +35,10 @@ public class UserServiceImpl implements UserService {
         }
 
         String role = "admin".equalsIgnoreCase(request.getUsername()) ? "ADMIN" : "USER";
-        //DTO -> Entity 객체 생성
-        User newUser = User.builder()
+        
+                User newUser = User.builder()
                 .username(request.getUsername())
-                .password(request.getPassword())
+                .password(passwordEncoder.encode(request.getPassword()))
                 .email(request.getEmail())
                 .role(role)
                 .build();
@@ -49,7 +51,8 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
 
-        if (!user.getPassword().equals(request.getPassword())) {
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
@@ -72,7 +75,7 @@ public class UserServiceImpl implements UserService {
 
         if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
 
-            user.setPassword(request.getPassword());
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
 
         User savedUser = userRepository.save(user);
@@ -119,7 +122,8 @@ public class UserServiceImpl implements UserService {
         }
         User userToUpdate = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-        userToUpdate.setPassword(newPassword.trim());
+
+        userToUpdate.setPassword(passwordEncoder.encode(newPassword.trim()));
         userRepository.save(userToUpdate);
     }
 

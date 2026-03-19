@@ -2,8 +2,10 @@ package com.finss.backend.admin;
 
 import com.finss.backend.post.PostResponse;
 import com.finss.backend.post.PostService;
+import com.finss.backend.user.User;
 import com.finss.backend.user.UserResponse;
 import com.finss.backend.user.UserService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,12 +23,19 @@ public class AdminController {
     private final UserService userService;
     private final PostService postService;
 
+    private User getLoginAdmin(HttpSession session) {
+        User loginUser = (User) session.getAttribute("loginUser");
+        if (loginUser == null || !"ADMIN".equals(loginUser.getRole())) {
+            return null;
+        }
+        return loginUser;
+    }
+
     // 사용자 목록 조회
     @GetMapping("/users")
-    public ResponseEntity<List<UserResponse>> getAllUsers(@RequestHeader("X-USER-ID") Long adminId) {
-        // 관리자 권한 확인
-        UserResponse admin = userService.findById(adminId);
-        if (!"ADMIN".equals(admin.getRole())) {
+    public ResponseEntity<List<UserResponse>> getAllUsers(HttpSession session) {
+        User admin = getLoginAdmin(session);
+        if (admin == null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -36,36 +45,36 @@ public class AdminController {
 
     // 게시글 전체 목록 조회
     @GetMapping("/posts")
-    public ResponseEntity<Page<PostResponse>> getAllPostsForAdmin(@RequestHeader("X-USER-ID") Long adminId,
+    public ResponseEntity<Page<PostResponse>> getAllPostsForAdmin(HttpSession session,
                                                                   Pageable pageable) {
-        UserResponse admin = userService.findById(adminId);
-        if (!"ADMIN".equals(admin.getRole())) {
+        User admin = getLoginAdmin(session);
+        if (admin == null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        Page<PostResponse> posts = postService.getAllPosts(adminId, true, pageable);
+        Page<PostResponse> posts = postService.getAllPosts(admin.getId(), true, pageable);
         return ResponseEntity.ok(posts);
     }
 
     @DeleteMapping("/posts/{postId}")
-    public ResponseEntity<Void> deletePostByAdmin(@RequestHeader("X-USER-ID") Long adminId,
+    public ResponseEntity<Void> deletePostByAdmin(HttpSession session,
                                                   @PathVariable Long postId) {
-        UserResponse admin = userService.findById(adminId);
-        if (!"ADMIN".equals(admin.getRole())) {
+        User admin = getLoginAdmin(session);
+        if (admin == null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        postService.deletePost(postId, adminId, true);
+        postService.deletePost(postId, admin.getId(), true);
         return ResponseEntity.noContent().build();
     }
 
     // 사용자 정보 수정
     @PutMapping("/users/{userId}")
-    public ResponseEntity<UserResponse> updateUserByAdmin(@RequestHeader("X-USER-ID") Long adminId,
+    public ResponseEntity<UserResponse> updateUserByAdmin(HttpSession session,
                                                           @PathVariable Long userId,
                                                           @RequestBody AdminUserUpdateRequest request) {
-        UserResponse admin = userService.findById(adminId);
-        if (!"ADMIN".equals(admin.getRole())) {
+        User admin = getLoginAdmin(session);
+        if (admin == null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -75,11 +84,11 @@ public class AdminController {
 
     // 비밀번호 재설정
     @PutMapping("/users/{userId}/reset-password")
-    public ResponseEntity<String> resetPasswordByAdmin(@RequestHeader("X-USER-ID") Long adminId,
+    public ResponseEntity<String> resetPasswordByAdmin(HttpSession session,
                                                        @PathVariable Long userId,
                                                        @RequestBody AdminPasswordResetRequest request) {
-        UserResponse admin = userService.findById(adminId);
-        if (!"ADMIN".equals(admin.getRole())) {
+        User admin = getLoginAdmin(session);
+        if (admin == null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -89,14 +98,14 @@ public class AdminController {
 
     // 사용자 상세 정보 조회
     @GetMapping("/users/{userId}/details")
-    public ResponseEntity<AdminUserDetailResponse> getUserDetailsByAdmin(@RequestHeader("X-USER-ID") Long adminId,
+    public ResponseEntity<AdminUserDetailResponse> getUserDetailsByAdmin(HttpSession session,
                                                                          @PathVariable Long userId) {
-        UserResponse admin = userService.findById(adminId);
-        if (!"ADMIN".equals(admin.getRole())) {
+        User admin = getLoginAdmin(session);
+        if (admin == null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        AdminUserDetailResponse details = userService.getAdminUserDetails(userId, adminId);
+        AdminUserDetailResponse details = userService.getAdminUserDetails(userId, admin.getId());
         return ResponseEntity.ok(details);
     }
 }

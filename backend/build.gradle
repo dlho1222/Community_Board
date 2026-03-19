@@ -27,6 +27,8 @@ repositories {
 dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    // Security 추가
+    implementation 'org.springframework.boot:spring-boot-starter-security'
     // DB 테이블 - Java Entity 자동 매핑 / CRUD 코드 최소화, Spring Data JPA
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
