@@ -72,11 +72,11 @@ const BoardDetailPage: React.FC = () => {
     try {
       setLoading(true);
       const postId = parseInt(id);
-      const postData = await postApi.getPostById(postId, user?.id, isAdmin);
+      const postData = await postApi.getPostById(postId);
       setPost(postData);
-      const commentsData = await commentApi.getCommentsByPostId(postId, user?.id, isAdmin);
+      const commentsData = await commentApi.getCommentsByPostId(postId);
       setComments(commentsData);
-      const filesData = await fileApi.getFilesByPostId(postId, user?.id, isAdmin);
+      const filesData = await fileApi.getFilesByPostId(postId); // Assume fileApi will be updated similarly
       setFiles(filesData);
     } catch (err: any) {
       console.error('Failed to fetch post or comments:', err);
@@ -122,9 +122,9 @@ const BoardDetailPage: React.FC = () => {
     try {
       const newCommentData = await commentApi.createComment({
         content: newComment,
-        userId: user.id,
+        userId: user.id, // Keeping userId in the body for backend to know the author, but isAdmin is removed from params
         postId: post.id,
-      }, user.id, isAdmin);
+      });
       setComments([...comments, newCommentData]);
       setNewComment('');
     } catch (err: any) {
@@ -142,7 +142,7 @@ const BoardDetailPage: React.FC = () => {
       return;
     }
     try {
-      await commentApi.deleteComment(commentId, user?.id, isAdmin);
+      await commentApi.deleteComment(commentId);
       setComments(comments.filter((comment) => comment.id !== commentId));
     } catch (err: any) {
       console.error('Failed to delete comment:', err);
@@ -160,7 +160,7 @@ const BoardDetailPage: React.FC = () => {
     }
     try {
       setLoading(true);
-      await postApi.deletePost(post.id, user?.id, isAdmin);
+      await postApi.deletePost(post.id);
       navigate('/board');
     } catch (err: any) {
       console.error('Failed to delete post:', err);

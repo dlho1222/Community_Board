@@ -64,7 +64,7 @@ const AdminUserManagementPage: React.FC = () => {
       
       try {
         setLoading(true);
-        const allUsers = await adminApi.getAllUsers(authContext.user.id);
+        const allUsers = await adminApi.getAllUsers(); // adminId 제거
         setUsers(allUsers);
       } catch (err) {
         setError('Failed to fetch users. Please try again later.');
@@ -107,7 +107,6 @@ const AdminUserManagementPage: React.FC = () => {
 
     try {
       const updatedUser = await adminApi.updateUserByAdmin(
-        authContext.user.id,
         editingUser.id,
         { username: newUsername.trim() }
       );
@@ -139,7 +138,6 @@ const AdminUserManagementPage: React.FC = () => {
 
     try {
       const message = await adminApi.resetPasswordByAdmin(
-        authContext.user.id,
         resettingUser.id,
         newPassword.trim()
       );
@@ -159,7 +157,7 @@ const AdminUserManagementPage: React.FC = () => {
     setDetailsLoading(true);
     setDetailsError(null);
     try {
-        const details = await adminApi.getAdminUserDetails(authContext.user.id, user.id);
+        const details = await adminApi.getAdminUserDetails(user.id);
         setSelectedUserDetail(details);
         setShowDetailsModal(true);
     } catch (err) {

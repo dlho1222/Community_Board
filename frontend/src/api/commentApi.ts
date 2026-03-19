@@ -17,52 +17,27 @@ export interface CommentCreateRequest {
 }
 
 const commentApi = {
-    getCommentsByPostId: async (postId: number, currentUserId?: number, isAdmin?: boolean): Promise<CommentResponse[]> => {
-        const params = new URLSearchParams();
-        if (currentUserId !== undefined && currentUserId !== null && !isNaN(currentUserId)) {
-            params.append('currentUserId', currentUserId.toString());
-        }
-        if (isAdmin === true) {
-            params.append('isAdmin', 'true');
-        }
-
-        const response = await api.get<CommentResponse[]>(`/api/comments/post/${postId}?${params.toString()}`);
+    getCommentsByPostId: async (postId: number): Promise<CommentResponse[]> => {
+        const response = await api.get<CommentResponse[]>(`/api/comments/post/${postId}`);
         return response.data;
     },
 
-    createComment: async (commentData: CommentCreateRequest, currentUserId?: number, isAdmin?: boolean): Promise<CommentResponse> => {
-        const params = new URLSearchParams();
-        if (currentUserId !== undefined && currentUserId !== null && !isNaN(currentUserId)) {
-            params.append('currentUserId', currentUserId.toString());
-        }
-        if (isAdmin === true) {
-            params.append('isAdmin', 'true');
-        }
-
-        const response = await api.post<CommentResponse>(`/api/comments?${params.toString()}`, commentData);
+    createComment: async (commentData: CommentCreateRequest): Promise<CommentResponse> => {
+        const response = await api.post<CommentResponse>('/api/comments', commentData);
         return response.data;
     },
 
     updateComment: async (id: number, content: string): Promise<CommentResponse> => {
-        // In a real application, you might want a DTO for update with validation
         const response = await api.put<CommentResponse>(`/api/comments/${id}`, content, {
             headers: {
-                'Content-Type': 'text/plain', // Explicitly set content type for raw string body
+                'Content-Type': 'text/plain',
             },
         });
         return response.data;
     },
 
-    deleteComment: async (id: number, currentUserId?: number, isAdmin?: boolean): Promise<void> => {
-        const params = new URLSearchParams();
-        if (currentUserId !== undefined && currentUserId !== null && !isNaN(currentUserId)) {
-            params.append('currentUserId', currentUserId.toString());
-        }
-        if (isAdmin === true) {
-            params.append('isAdmin', 'true');
-        }
-
-        await api.delete(`/api/comments/${id}?${params.toString()}`);
+    deleteComment: async (id: number): Promise<void> => {
+        await api.delete(`/api/comments/${id}`);
     },
 };
 

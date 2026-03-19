@@ -46,7 +46,7 @@ const AdminPostManagementPage: React.FC = () => {
       
       try {
         setLoading(true);
-        const pageData: Page<PostResponse> = await adminApi.getAllPostsForAdmin(authContext.user.id, page, size); // Pass page/size
+        const pageData: Page<PostResponse> = await adminApi.getAllPostsForAdmin(page, size); // adminId 제거
         setPosts(pageData.content);
         setTotalPages(pageData.totalPages);
         setCurrentPage(pageData.number + 1); // Adjust for 1-indexed MUI Pagination
@@ -75,13 +75,13 @@ const AdminPostManagementPage: React.FC = () => {
     }
 
     try {
-        await adminApi.deletePostByAdmin(authContext.user.id, postId);
+        await adminApi.deletePostByAdmin(postId);
         // Refresh the list after deletion by re-fetching
         // To ensure correct pagination, re-fetch the current page or adjust state carefully
         // For simplicity, re-fetch the current page.
         // Adjust for 0-indexed API calls
         const apiPage = currentPage - 1;
-        const pageData: Page<PostResponse> = await adminApi.getAllPostsForAdmin(authContext.user.id, apiPage, pageSize);
+        const pageData: Page<PostResponse> = await adminApi.getAllPostsForAdmin(apiPage, pageSize);
         setPosts(pageData.content);
         setTotalPages(pageData.totalPages);
         setCurrentPage(pageData.number + 1); // Adjust for 1-indexed MUI Pagination

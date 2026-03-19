@@ -57,32 +57,18 @@ export interface Page<T> {
 }
 
 const postApi = {
-    getAllPosts: async (currentUserId?: number, isAdmin?: boolean, page: number = 0, size: number = 10): Promise<Page<PostResponse>> => {
+    getAllPosts: async (page: number = 0, size: number = 10): Promise<Page<PostResponse>> => {
         const params = new URLSearchParams();
-        if (currentUserId !== undefined && currentUserId !== null && !isNaN(currentUserId)) {
-            params.append('currentUserId', currentUserId.toString());
-        }
-        if (isAdmin === true) {
-            params.append('isAdmin', 'true');
-        }
         params.append('page', page.toString());
         params.append('size', size.toString());
-        params.append('sort', 'createdAt,desc'); // Default sort to newest first
+        params.append('sort', 'createdAt,desc');
 
         const response = await api.get<Page<PostResponse>>(`/api/posts?${params.toString()}`);
         return response.data;
     },
 
-    getPostById: async (id: number, currentUserId?: number, isAdmin?: boolean): Promise<PostResponse> => {
-        const params = new URLSearchParams();
-        if (currentUserId !== undefined && currentUserId !== null && !isNaN(currentUserId)) {
-            params.append('currentUserId', currentUserId.toString());
-        }
-        if (isAdmin === true) {
-            params.append('isAdmin', 'true');
-        }
-
-        const response = await api.get<PostResponse>(`/api/posts/${id}?${params.toString()}`);
+    getPostById: async (id: number): Promise<PostResponse> => {
+        const response = await api.get<PostResponse>(`/api/posts/${id}`);
         return response.data;
     },
 
@@ -91,43 +77,21 @@ const postApi = {
         return response.data;
     },
 
-    updatePost: async (id: number, postData: PostUpdateRequest, currentUserId?: number, isAdmin?: boolean): Promise<PostResponse> => {
-        const params = new URLSearchParams();
-        if (currentUserId !== undefined && currentUserId !== null && !isNaN(currentUserId)) {
-            params.append('currentUserId', currentUserId.toString());
-        }
-        if (isAdmin === true) {
-            params.append('isAdmin', 'true');
-        }
-
-        const response = await api.put<PostResponse>(`/api/posts/${id}?${params.toString()}`, postData);
+    updatePost: async (id: number, postData: PostUpdateRequest): Promise<PostResponse> => {
+        const response = await api.put<PostResponse>(`/api/posts/${id}`, postData);
         return response.data;
     },
 
-    deletePost: async (id: number, currentUserId?: number, isAdmin?: boolean): Promise<void> => {
-        const params = new URLSearchParams();
-        if (currentUserId !== undefined && currentUserId !== null && !isNaN(currentUserId)) {
-            params.append('currentUserId', currentUserId.toString());
-        }
-        if (isAdmin === true) {
-            params.append('isAdmin', 'true');
-        }
-
-        await api.delete(`/api/posts/${id}?${params.toString()}`);
+    deletePost: async (id: number): Promise<void> => {
+        await api.delete(`/api/posts/${id}`);
     },
 
-    searchPosts: async (keyword: string, currentUserId?: number, isAdmin?: boolean, page: number = 0, size: number = 10): Promise<Page<PostResponse>> => {
+    searchPosts: async (keyword: string, page: number = 0, size: number = 10): Promise<Page<PostResponse>> => {
         const params = new URLSearchParams();
         params.append('keyword', keyword);
-        if (currentUserId !== undefined && currentUserId !== null && !isNaN(currentUserId)) {
-            params.append('currentUserId', currentUserId.toString());
-        }
-        if (isAdmin === true) {
-            params.append('isAdmin', 'true');
-        }
         params.append('page', page.toString());
         params.append('size', size.toString());
-        params.append('sort', 'createdAt,desc'); // Default sort to newest first
+        params.append('sort', 'createdAt,desc');
 
         const response = await api.get<Page<PostResponse>>(`/api/posts/search?${params.toString()}`);
         return response.data;

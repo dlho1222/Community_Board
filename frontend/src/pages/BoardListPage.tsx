@@ -112,9 +112,9 @@ const BoardListPage: React.FC = () => {
             const userId = user?.id;
 
             if (keyword && keyword.trim() !== '') {
-                pageData = await postApi.searchPosts(keyword, userId, isAdmin, page, size);
+                pageData = await postApi.searchPosts(keyword, page, size);
             } else {
-                pageData = await postApi.getAllPosts(userId, isAdmin, page, size);
+                pageData = await postApi.getAllPosts(page, size);
             }
             setPosts(pageData.content);
             setTotalPages(pageData.totalPages);

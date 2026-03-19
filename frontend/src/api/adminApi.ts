@@ -16,34 +16,24 @@ export interface AdminUserDetailResponse {
  * @param adminId - The ID of the administrator making the request.
  * @returns A promise that resolves to an array of User objects.
  */
-export const getAllUsers = async (adminId: number): Promise<User[]> => {
+export const getAllUsers = async (): Promise<User[]> => {
     try {
-        const response = await api.get<User[]>('/api/admin/users', {
-            headers: {
-                'X-USER-ID': adminId,
-            },
-        });
+        const response = await api.get<User[]>('/api/admin/users');
         return response.data;
     } catch (error) {
         console.error("Error fetching all users:", error);
-        // It's often better to let the calling component handle the error UI
         throw error;
     }
 };
 
 /**
  * Fetches detailed information for a specific user as an admin.
- * @param adminId - The ID of the administrator making the request.
  * @param userId - The ID of the user to fetch details for.
  * @returns A promise that resolves to an AdminUserDetailResponse object.
  */
-export const getAdminUserDetails = async (adminId: number, userId: number): Promise<AdminUserDetailResponse> => {
+export const getAdminUserDetails = async (userId: number): Promise<AdminUserDetailResponse> => {
     try {
-        const response = await api.get<AdminUserDetailResponse>(`/api/admin/users/${userId}/details`, {
-            headers: {
-                'X-USER-ID': adminId,
-            },
-        });
+        const response = await api.get<AdminUserDetailResponse>(`/api/admin/users/${userId}/details`);
         return response.data;
     } catch (error) {
         console.error(`Error fetching user details for user ${userId}:`, error);
@@ -53,18 +43,13 @@ export const getAdminUserDetails = async (adminId: number, userId: number): Prom
 
 /**
  * Updates a user's information by an admin.
- * @param adminId - The ID of the administrator making the request.
  * @param userId - The ID of the user to update.
  * @param data - The data to update, e.g., { username: string }.
  * @returns A promise that resolves to the updated User object.
  */
-export const updateUserByAdmin = async (adminId: number, userId: number, data: { username: string }): Promise<User> => {
+export const updateUserByAdmin = async (userId: number, data: { username: string }): Promise<User> => {
     try {
-        const response = await api.put<User>(`/api/admin/users/${userId}`, data, {
-            headers: {
-                'X-USER-ID': adminId,
-            },
-        });
+        const response = await api.put<User>(`/api/admin/users/${userId}`, data);
         return response.data;
     } catch (error) {
         console.error(`Error updating user ${userId}:`, error);
@@ -74,21 +59,15 @@ export const updateUserByAdmin = async (adminId: number, userId: number, data: {
 
 /**
  * Resets a user's password by an admin.
- * @param adminId - The ID of the administrator making the request.
  * @param userId - The ID of the user whose password to reset.
  * @param newPassword - The new password.
  * @returns A promise that resolves to the success message.
  */
-export const resetPasswordByAdmin = async (adminId: number, userId: number, newPassword: string): Promise<string> => {
+export const resetPasswordByAdmin = async (userId: number, newPassword: string): Promise<string> => {
     try {
         const response = await api.put<string>(
             `/api/admin/users/${userId}/reset-password`,
-            { newPassword },
-            {
-                headers: {
-                    'X-USER-ID': adminId,
-                },
-            }
+            { newPassword }
         );
         return response.data;
     } catch (error) {
@@ -99,21 +78,16 @@ export const resetPasswordByAdmin = async (adminId: number, userId: number, newP
 
 /**
  * Fetches all posts, including secret ones, for an admin.
- * @param adminId - The ID of the administrator making the request.
- * @returns A promise that resolves to an array of PostResponse objects.
+ * @returns A promise that resolves to a Page of PostResponse objects.
  */
-export const getAllPostsForAdmin = async (adminId: number, page: number = 0, size: number = 1000): Promise<Page<PostResponse>> => { // Added page/size params and changed return type
+export const getAllPostsForAdmin = async (page: number = 0, size: number = 1000): Promise<Page<PostResponse>> => {
     try {
         const params = new URLSearchParams();
         params.append('page', page.toString());
         params.append('size', size.toString());
-        params.append('sort', 'createdAt,desc'); // Default sort to newest first
+        params.append('sort', 'createdAt,desc');
 
-        const response = await api.get<Page<PostResponse>>(`/api/admin/posts?${params.toString()}`, { // Changed return type here
-            headers: {
-                'X-USER-ID': adminId,
-            },
-        });
+        const response = await api.get<Page<PostResponse>>(`/api/admin/posts?${params.toString()}`);
         return response.data;
     } catch (error) {
         console.error("Error fetching all posts for admin:", error);
@@ -123,17 +97,12 @@ export const getAllPostsForAdmin = async (adminId: number, page: number = 0, siz
 
 /**
  * Deletes any post by an admin.
- * @param adminId - The ID of the administrator making the request.
  * @param postId - The ID of the post to delete.
  * @returns A promise that resolves when the deletion is complete.
  */
-export const deletePostByAdmin = async (adminId: number, postId: number): Promise<void> => {
+export const deletePostByAdmin = async (postId: number): Promise<void> => {
     try {
-        await api.delete(`/api/admin/posts/${postId}`, {
-            headers: {
-                'X-USER-ID': adminId,
-            },
-        });
+        await api.delete(`/api/admin/posts/${postId}`);
     } catch (error) {
         console.error(`Error deleting post ${postId} by admin:`, error);
         throw error;

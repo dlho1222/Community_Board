@@ -84,12 +84,12 @@ const BoardWritePage: React.FC = () => {
     try {
       setInitialLoading(true);
       const postId = parseInt(id);
-      const post = await postApi.getPostById(postId, currentUserId, isAdmin);
+      const post = await postApi.getPostById(postId);
       setTitle(post.title);
       setContent(post.content);
       setSecret(post.secret);
 
-      const filesData = await fileApi.getFilesByPostId(postId, currentUserId, isAdmin);
+      const filesData = await fileApi.getFilesByPostId(postId);
       setExistingFiles(filesData);
     } catch (err: any) {
       console.error('Failed to fetch post or files for editing:', err);
@@ -151,7 +151,7 @@ const BoardWritePage: React.FC = () => {
       let postId: number;
       if (isEditing && id) {
         const updatedPost: PostUpdateRequest = { title, content, secret };
-        await postApi.updatePost(parseInt(id), updatedPost, user?.id, isAdmin);
+        await postApi.updatePost(parseInt(id), updatedPost);
         postId = parseInt(id);
       } else {
         const newPost: PostCreateRequest = { title, content, userId: user.id, secret };
