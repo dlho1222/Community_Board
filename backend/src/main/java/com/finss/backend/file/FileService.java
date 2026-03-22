@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface FileService {
 
-    File uploadFile(MultipartFile file, Long postId);
+    File uploadFile(MultipartFile file, Long postId, Long userId);
 
     Resource downloadFile(Long fileId, Long currentUserId, boolean isAdmin);
 

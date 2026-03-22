@@ -11,7 +11,7 @@
 | 번호 | 점검 항목 | 위험도 | 상태 | 관련 파일 |
 | :--- | :--- | :---: | :---: | :--- |
 | **1** | **부적절한 인가 및 권한 관리** (Admin/isAdmin 삭제) | 🔴 높음 | ✅ **완료** | `AdminController`, `PostController`, `postApi.ts` 등 |
-| **2** | **파일 업로드/다운로드 보안** (웹쉘 방어) | 🔴 높음 | ⏳ 대기 | `FileStorageService` |
+| **2** | **파일 업로드/다운로드 보안** (웹쉘 방어) | 🔴 높음 | ✅ **완료** | `FileStorageService`, `FileController`, `fileApi.ts` |
 | **3** | **입력값 검증 및 XSS 방어** (스크립트 실행 차단) | 🟠 중간 | ⏳ 대기 | `PostServiceImpl`, `CommentServiceImpl` |
 | **4** | **인증 및 세션 관리 강화** (SecurityConfig 설정) | 🟠 중간 | ⏳ 대기 | `SecurityConfig`, `UserController` |
 | **5** | **정보 노출 방지** (예외 처리 시 내부 정보 은폐) | 🟡 낮음 | ⏳ 대기 | `GlobalExceptionHandler` (신규) |
