@@ -78,11 +78,4 @@ public class UserController {
         UserResponse userResponse = UserResponse.fromEntity(loginUser);
         return ResponseEntity.ok(userResponse);
     }
-
-
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException e) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
-    }
 }
