@@ -1,6 +1,7 @@
 package com.finss.backend.user;
 
 import com.finss.backend.common.SessionConstants;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,9 +27,21 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserResponse> loginUser(@Valid @RequestBody UserLoginRequest request, HttpSession session) {
+    public ResponseEntity<UserResponse> loginUser(@Valid @RequestBody UserLoginRequest request, HttpServletRequest httpRequest) {
         User user = userService.loginWithUser(request); // User 객체를 반환하는 서비스 메서드 호출
-        session.setAttribute(SessionConstants.LOGIN_USER, user); // 세션에 'loginUser'로 객체 저장
+
+        //세션 고정(Session Fixation) 방지
+        //기존 세션이 있다면 완전히 파기 (기존 세션 ID 폐기)
+        HttpSession oldSession = httpRequest.getSession(false);
+        if (oldSession != null) {
+            oldSession.invalidate();
+        }
+
+        //완전히 새로운 세션 생성 (새로운 세션 ID 발급)
+        HttpSession newSession = httpRequest.getSession(true);
+
+        //새 세션에 로그인 정보 저장
+        newSession.setAttribute(SessionConstants.LOGIN_USER, user);
 
         UserResponse userResponse = UserResponse.fromEntity(user);
         return ResponseEntity.ok(userResponse);

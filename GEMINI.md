@@ -13,7 +13,7 @@
 | **1** | **부적절한 인가 및 권한 관리** (Admin/isAdmin 삭제) | 🔴 높음 | ✅ **완료** | `AdminController`, `PostController`, `postApi.ts` 등 |
 | **2** | **파일 업로드/다운로드 보안** (웹쉘 방어) | 🔴 높음 | ✅ **완료** | `FileStorageService`, `FileController`, `fileApi.ts` |
 | **3** | **입력값 검증 및 XSS 방어** (스크립트 실행 차단) | 🟠 중간 | ✅ **완료** | `PostServiceImpl`, `CommentServiceImpl` |
-| **4** | **인증 및 세션 관리 강화** (SecurityConfig 설정) | 🟠 중간 | ⏳ 대기 | `SecurityConfig`, `UserController` |
+| **4** | **인증 및 세션 관리 강화** (SecurityConfig 설정) | 🟠 중간 | ✅ **완료** | `SecurityConfig`, `UserController`, `application.properties` |
 | **5** | **정보 노출 방지** (예외 처리 시 내부 정보 은폐) | 🟡 낮음 | ⏳ 대기 | `GlobalExceptionHandler` (신규) |
 | **6** | **비밀번호 정책 강화** (복잡도 검증) | 🟡 낮음 | ⏳ 대기 | `UserServiceImpl` |
 | **7** | **비즈니스 로직 설계 오류** (admin 아이디 권한 부여) | 🟠 중간 | ⏳ 대기 | `UserServiceImpl` |

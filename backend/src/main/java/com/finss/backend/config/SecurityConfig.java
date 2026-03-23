@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -26,6 +27,13 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable) // REST API이므로 CSRF는 일단 비활성화 (나중에 별도로 다룸)
             .authorizeHttpRequests(auth -> auth
                 .anyRequest().permitAll() // 현재 실습 단계이므로 모든 요청 허용
+            )
+            //세션 관리 정책 설정
+            .sessionManagement(session -> session
+                // 세션 생성 정책: 필요할 때만 생성 (HttpSession 방식 유지)
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                // 세션 고정 방지 전략: 로그인 시 세션 ID를 변경하도록 설정 (서블릿 3.1+ 기본 기능)
+                .sessionFixation().changeSessionId()
             );
         
         return http.build();
