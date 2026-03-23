@@ -10,6 +10,7 @@ import com.finss.backend.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.util.HtmlUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -38,7 +39,7 @@ public class CommentServiceImpl implements CommentService {
                 .orElseThrow(() -> new IllegalArgumentException("Post not found with id: " + request.getPostId()));
 
         Comment newComment = Comment.builder()
-                .content(request.getContent())
+                .content(HtmlUtils.htmlEscape(request.getContent())) // HTML Escape
                 .user(user)
                 .post(post)
                 .createdAt(LocalDateTime.now())
@@ -71,7 +72,7 @@ public class CommentServiceImpl implements CommentService {
             throw new AccessDeniedException("댓글을 수정할 권한이 없습니다.");
         }
 
-        existingComment.setContent(content);
+        existingComment.setContent(HtmlUtils.htmlEscape(content)); // HTML Escape
 
         Comment updatedComment = commentRepository.save(existingComment);
         return CommentResponse.fromEntity(updatedComment);

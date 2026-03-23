@@ -10,6 +10,7 @@ import com.finss.backend.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.util.HtmlUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,8 +33,8 @@ public class PostServiceImpl implements PostService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
 
         Post newPost = Post.builder()
-                .title(request.getTitle())
-                .content(request.getContent())
+                .title(HtmlUtils.htmlEscape(request.getTitle())) //HTML Escape
+                .content(HtmlUtils.htmlEscape(request.getContent())) //HTML Escape
                 .secret(request.isSecret())
                 .user(user)
                 .createdAt(LocalDateTime.now())
@@ -74,7 +75,11 @@ public class PostServiceImpl implements PostService {
             throw new AccessDeniedException("게시글을 수정할 권한이 없습니다.");
         }
 
-        existingPost.update(request.getTitle(), request.getContent(), request.isSecret());
+        existingPost.update(
+                HtmlUtils.htmlEscape(request.getTitle()), 
+                HtmlUtils.htmlEscape(request.getContent()), 
+                request.isSecret()
+        );
 
         Post updatedPost = postRepository.save(existingPost);
         return PostResponse.fromEntity(updatedPost);
