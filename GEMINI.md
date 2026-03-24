@@ -16,7 +16,7 @@
 | **4** | **인증 및 세션 관리 강화** (SecurityConfig 설정) | 🟠 중간 | ✅ **완료** | `SecurityConfig`, `UserController`, `application.properties` |
 | **5** | **정보 노출 방지** (예외 처리 시 내부 정보 은폐) | 🟡 낮음 | ✅ **완료** | `GlobalExceptionHandler`, `application.properties` |
 | **6** | **비밀번호 정책 강화** (복잡도 검증) | 🟡 낮음 | ✅ **완료** | `UserRegisterRequest`, `UserUpdateRequest` |
-| **7** | **비즈니스 로직 설계 오류** (admin 아이디 권한 부여) | 🟠 중간 | ⏳ 대기 | `UserServiceImpl` |
+| **7** | **비즈니스 로직 설계 오류** (admin 아이디 권한 부여) | 🟠 중간 | ✅ **완료** | `UserServiceImpl` |
 | **8** | **CSRF 방어 강화** (토큰 검증 및 SameSite 설정) | 🔴 높음 | ⏳ 대기 | `SecurityConfig`, `api.ts` |
 
 ---

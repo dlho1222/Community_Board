@@ -34,7 +34,10 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
 
-        String role = "admin".equalsIgnoreCase(request.getUsername()) ? UserRole.ADMIN.name() : UserRole.USER.name();
+        // 비즈니스 로직 설계 오류 해결
+        // 특정 아이디(admin 등)에 따른 자동 권한 부여 로직을 삭제하고, 
+        // 모든 신규 가입자는 기본적으로 일반 사용자(USER) 권한을 갖도록 설정
+        String role = UserRole.USER.name();
         
         User newUser = User.builder()
                 .username(request.getUsername())
