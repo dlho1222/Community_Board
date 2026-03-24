@@ -2,6 +2,7 @@ package com.finss.backend.common;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -39,5 +40,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<String> handleAccessDeniedException(AccessDeniedException e) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+    }
+
+    /**
+     * [추가] Bean Validation(@Valid) 검증 실패 시 발생하는 예외 처리
+     * 사용자가 잘못된 비밀번호 형식 등을 입력했을 때, '서버 에러(500)'가 아닌 '잘못된 요청(400)'으로 응답합니다.
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<String> handleValidationExceptions(MethodArgumentNotValidException e) {
+        // DTO에 적어둔 에러 메시지 중 첫 번째 것을 가져옵니다.
+        String errorMessage = e.getBindingResult().getAllErrors().get(0).getDefaultMessage();
+        
+        // 400 Bad Request와 함께 정확한 가이드 메시지 전달
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
     }
 }
