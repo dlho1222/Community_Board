@@ -39,7 +39,11 @@ const LoginPage: React.FC = () => {
             navigate('/'); // Redirect to homepage
         } catch (err: any) {
             if (err.response) {
-                setError(err.response.data);
+                // 서버 에러 메시지가 객체인 경우를 대비해 문자열만 추출
+                const errorMessage = typeof err.response.data === 'object' 
+                    ? (err.response.data.message || err.response.data.error || 'Login failed')
+                    : err.response.data;
+                setError(errorMessage);
             } else if (err.request) {
                 setError('No response from server. Please try again later.');
             } else {
