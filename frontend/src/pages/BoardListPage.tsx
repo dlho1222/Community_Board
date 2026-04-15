@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useContext, useCallback, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, {useState, useEffect, useContext, useCallback, useRef} from 'react';
+import {useNavigate, Link} from 'react-router-dom';
 import postApi from '../api/postApi';
-import type { PostResponse, Page } from '../api/postApi';
-import { AuthContext } from '../context/AuthContext';
+import type {PostResponse, Page} from '../api/postApi';
+import {AuthContext} from '../context/AuthContext';
 import lockIcon from '../assets/lock_icon.png';
 
 // MUI Components
@@ -52,13 +52,13 @@ interface MemoizedSearchInputProps {
 }
 
 const MemoizedSearchInput: React.FC<MemoizedSearchInputProps> = React.memo(({
-    searchTerm,
-    setSearchTerm,
-    handleSearchSubmit,
-    searchInputRef,
-    loading,
-}) => (
-    <Box component="form" onSubmit={handleSearchSubmit} sx={{ width: '300px' }}>
+                                                                                searchTerm,
+                                                                                setSearchTerm,
+                                                                                handleSearchSubmit,
+                                                                                searchInputRef,
+                                                                                loading,
+                                                                            }) => (
+    <Box component="form" onSubmit={handleSearchSubmit} sx={{width: '300px'}}>
         <TextField
             fullWidth
             label="Search posts by title..."
@@ -69,12 +69,13 @@ const MemoizedSearchInput: React.FC<MemoizedSearchInputProps> = React.memo(({
             InputProps={{
                 startAdornment: (
                     <InputAdornment position="start">
-                        <SearchIcon />
+                        <SearchIcon/>
                     </InputAdornment>
                 ),
                 endAdornment: (
                     <InputAdornment position="end">
-                        <Button onClick={handleSearchSubmit} variant="text" size="small" disabled={loading}>Search</Button>
+                        <Button onClick={handleSearchSubmit} variant="text" size="small"
+                                disabled={loading}>Search</Button>
                     </InputAdornment>
                 ),
             }}
@@ -96,7 +97,7 @@ const BoardListPage: React.FC = () => {
     const navigate = useNavigate();
     const authContext = useContext(AuthContext);
 
-    const { user } = authContext || { user: null };
+    const {user} = authContext || {user: null};
     const isAdmin = user?.role === 'ADMIN';
 
     const debouncedSearchTerm = useDebounce(searchTerm, 500);
@@ -121,7 +122,6 @@ const BoardListPage: React.FC = () => {
             setCurrentPage(pageData.number + 1); // Adjust for 1-indexed MUI Pagination
             setTotalElements(pageData.totalElements);
         } catch (err: any) {
-            console.error('Failed to fetch posts:', err);
             setError(err.response?.data?.message || 'Failed to load posts. Please try again later.');
         } finally {
             setLoading(false);
@@ -171,8 +171,8 @@ const BoardListPage: React.FC = () => {
 
     if (loading) {
         return (
-            <Container sx={{ mt: 4, textAlign: 'center' }}>
-                <CircularProgress />
+            <Container sx={{mt: 4, textAlign: 'center'}}>
+                <CircularProgress/>
                 <Typography>Loading posts...</Typography>
             </Container>
         );
@@ -180,17 +180,17 @@ const BoardListPage: React.FC = () => {
 
     if (error) {
         return (
-            <Container sx={{ mt: 4 }}>
+            <Container sx={{mt: 4}}>
                 <Alert severity="error">{error}</Alert>
             </Container>
         );
     }
 
     return (
-        <Container sx={{ mt: 4 }}>
+        <Container sx={{mt: 4}}>
             <Typography variant="h4" component="h2" gutterBottom>Community Board</Typography>
 
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+            <Box sx={{display: 'flex', justifyContent: 'space-between', mb: 3}}>
                 <MemoizedSearchInput
                     searchTerm={searchTerm}
                     setSearchTerm={setSearchTerm}
@@ -202,7 +202,7 @@ const BoardListPage: React.FC = () => {
             </Box>
 
             <TableContainer component={Paper}>
-                <Table sx={{ minWidth: 650 }} aria-label="simple table">
+                <Table sx={{minWidth: 650}} aria-label="simple table">
                     <TableHead>
                         <TableRow>
                             <TableCell>Seq</TableCell>
@@ -216,20 +216,21 @@ const BoardListPage: React.FC = () => {
                         {posts.map((post, index) => (
                             <TableRow
                                 key={post.id}
-                                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                                sx={{'&:last-child td, &:last-child th': {border: 0}}}
                             >
                                 <TableCell component="th" scope="row">
                                     {totalElements - ((currentPage - 1) * pageSize + index)}
                                 </TableCell>
                                 <TableCell>
-                                    <Link to={`/board/${post.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                    <Link to={`/board/${post.id}`} style={{textDecoration: 'none', color: 'inherit'}}>
                                         {post.title}
                                     </Link>
                                 </TableCell>
                                 <TableCell>{post.authorName}</TableCell>
                                 <TableCell>{new Date(post.createdAt).toLocaleDateString()}</TableCell>
                                 <TableCell>
-                                    {post.secret && <img src={lockIcon} alt="Secret" style={{ width: '20px', height: '20px' }} />}
+                                    {post.secret &&
+                                        <img src={lockIcon} alt="Secret" style={{width: '20px', height: '20px'}}/>}
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -238,7 +239,7 @@ const BoardListPage: React.FC = () => {
             </TableContainer>
 
             {totalPages > 1 && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                <Box sx={{display: 'flex', justifyContent: 'center', mt: 4}}>
                     <Pagination
                         count={totalPages}
                         page={currentPage}

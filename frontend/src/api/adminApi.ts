@@ -1,8 +1,8 @@
 // frontend/src/api/adminApi.ts
 import api from './api';
-import type { User } from '../context/AuthContext';
-import type { PostResponse, Page } from './postApi';
-import type { CommentResponse } from './commentApi';
+import type {User} from '../context/AuthContext';
+import type {PostResponse, Page} from './postApi';
+import type {CommentResponse} from './commentApi';
 
 export interface AdminUserDetailResponse {
     user: User;
@@ -21,7 +21,6 @@ export const getAllUsers = async (): Promise<User[]> => {
         const response = await api.get<User[]>('/api/admin/users');
         return response.data;
     } catch (error) {
-        console.error("Error fetching all users:", error);
         throw error;
     }
 };
@@ -36,7 +35,6 @@ export const getAdminUserDetails = async (userId: number): Promise<AdminUserDeta
         const response = await api.get<AdminUserDetailResponse>(`/api/admin/users/${userId}/details`);
         return response.data;
     } catch (error) {
-        console.error(`Error fetching user details for user ${userId}:`, error);
         throw error;
     }
 };
@@ -52,7 +50,6 @@ export const updateUserByAdmin = async (userId: number, data: { username: string
         const response = await api.put<User>(`/api/admin/users/${userId}`, data);
         return response.data;
     } catch (error) {
-        console.error(`Error updating user ${userId}:`, error);
         throw error;
     }
 };
@@ -67,11 +64,10 @@ export const resetPasswordByAdmin = async (userId: number, newPassword: string):
     try {
         const response = await api.put<string>(
             `/api/admin/users/${userId}/reset-password`,
-            { newPassword }
+            {newPassword}
         );
         return response.data;
     } catch (error) {
-        console.error(`Error resetting password for user ${userId}:`, error);
         throw error;
     }
 };
@@ -90,7 +86,6 @@ export const getAllPostsForAdmin = async (page: number = 0, size: number = 1000)
         const response = await api.get<Page<PostResponse>>(`/api/admin/posts?${params.toString()}`);
         return response.data;
     } catch (error) {
-        console.error("Error fetching all posts for admin:", error);
         throw error;
     }
 };
@@ -104,7 +99,6 @@ export const deletePostByAdmin = async (postId: number): Promise<void> => {
     try {
         await api.delete(`/api/admin/posts/${postId}`);
     } catch (error) {
-        console.error(`Error deleting post ${postId} by admin:`, error);
         throw error;
     }
 };
