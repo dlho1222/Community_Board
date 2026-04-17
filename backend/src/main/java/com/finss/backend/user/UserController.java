@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 /*
     @Valid - `@Size`, `@NotBlank` 같은 유효성 검사 어노테이션의 조건들을 모두 만족하는지 `@Valid` 어노테이션으로 검증
     @ReequstBody - UserRegisterReqesut.java -> DTO 변환, 역직렬화 어노테이션
@@ -28,9 +29,9 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<UserResponse> loginUser(@Valid @RequestBody UserLoginRequest request, HttpServletRequest httpRequest) {
-        User user = userService.loginWithUser(request); // User 객체를 반환하는 서비스 메서드 호출
+        User user = userService.loginWithUser(request);
 
-        //세션 고정(Session Fixation) 방지
+        //세션 고정 방지
         //기존 세션이 있다면 완전히 파기 (기존 세션 ID 폐기)
         HttpSession oldSession = httpRequest.getSession(false);
         if (oldSession != null) {
@@ -54,7 +55,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, 
+    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id,
                                                    @Valid @RequestBody UserUpdateRequest request,
                                                    HttpSession session) {
         //로그인된 사용자 본인이 맞는지 확인 (인가 취약점 방어)
@@ -69,7 +70,7 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getMe(HttpSession session) {
-        //세션에서 로그인 정보를 직접 꺼냄
+
         User loginUser = (User) session.getAttribute(SessionConstants.LOGIN_USER);
         if (loginUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

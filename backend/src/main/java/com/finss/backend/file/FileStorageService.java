@@ -1,5 +1,8 @@
 package com.finss.backend.file;
 
+import com.finss.backend.common.CustomFileNotFoundException;
+import com.finss.backend.common.FileException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -17,79 +20,73 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class FileStorageService {
 
     private final Path fileStorageLocation;
-    //허용된 확장자 목록 (화이트리스트)
     private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "gif", "pdf", "txt", "zip");
 
     public FileStorageService(@Value("${file.upload-dir:uploads}") String uploadDir) {
         this.fileStorageLocation = Paths.get(uploadDir).toAbsolutePath().normalize();
         try {
             Files.createDirectories(this.fileStorageLocation);
-        } catch (Exception ex) {
-            throw new RuntimeException("Could not create the directory where the uploaded files will be stored.", ex);
+        } catch (IOException ex) {
+            log.error("파일 저장 디렉토리 생성 실패: {}", this.fileStorageLocation, ex);
+            throw new FileException("서버 내부 오류로 파일 저장소를 준비할 수 없습니다.");
         }
     }
 
     public String storeFile(MultipartFile file) {
         String originalFileName = Objects.requireNonNull(file.getOriginalFilename());
 
-        //확장자 추출 및 검증
         String extension = getFileExtension(originalFileName);
         if (!ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
-            throw new RuntimeException("허용되지 않는 파일 확장자입니다: " + extension);
+            log.warn("허용되지 않는 확장자 시도: {}", extension);
+            throw new IllegalArgumentException("지원하지 않는 파일 형식입니다.");
         }
 
-        //파일 이름 완전 세탁 (순수 UUID + 안전한 확장자)
-        //사용자가 보낸 이름을 섞지 않아 Path Traversal을 원천 차단
         String fileName = UUID.randomUUID().toString() + "." + extension;
 
         try {
             Path targetLocation = this.fileStorageLocation.resolve(fileName);
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-
             return fileName;
         } catch (IOException ex) {
-            throw new RuntimeException("Could not store file " + fileName + ". Please try again!", ex);
+            log.error("파일 물리 저장 중 오류 발생. 원본명: {}, 저장명: {}", originalFileName, fileName, ex);
+            throw new FileException("파일을 서버에 저장하는 중 시스템 오류가 발생했습니다.");
         }
     }
 
-    // 확장자 추출 헬퍼 메서드
     private String getFileExtension(String fileName) {
         int lastIndex = fileName.lastIndexOf(".");
-        if (lastIndex == -1) {
-            return ""; // 확장자 없음
-        }
-        return fileName.substring(lastIndex + 1);
+        return (lastIndex == -1) ? "" : fileName.substring(lastIndex + 1);
     }
-    //fineName을 받아 해당 파일의 전체 경로 계산, UrlResource로 파일을 Spring Resource객체로 로드 -> 파일 내용을 스트림 형태로 쉽게 다룰 수 있게 해주는 객체
+
     public Resource loadFileAsResource(String fileName) {
         try {
             Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
             Resource resource = new UrlResource(filePath.toUri());
-            if (resource.exists()) {
+            
+            if (resource.exists() && resource.isReadable()) {
                 return resource;
             } else {
-                throw new RuntimeException("File not found " + fileName);
+                log.warn("파일을 찾을 수 없거나 읽을 수 없음: {}", fileName);
+                throw new CustomFileNotFoundException("요청하신 파일을 시스템에서 찾을 수 없습니다.");
             }
         } catch (MalformedURLException ex) {
-            throw new RuntimeException("File not found " + fileName, ex);
+            log.error("파일 경로 URL 생성 오류: {}", fileName, ex);
+            throw new CustomFileNotFoundException("파일 경로 형식이 잘못되었습니다.");
         }
     }
 
-    //파일 이름을 받아 디스크에서 해당 파일을 Files.deleteIfExists()를 통해 물리적으로 삭제
     public boolean deleteFile(String fileName) {
         try {
             Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
             return Files.deleteIfExists(filePath);
         } catch (IOException ex) {
-            throw new RuntimeException("Could not delete file " + fileName, ex);
+            log.error("파일 삭제 실패: {}", fileName, ex);
+            throw new FileException("파일 삭제 처리 중 서버 오류가 발생했습니다.");
         }
-    }
-
-    public Path getFileStorageLocation() {
-        return fileStorageLocation;
     }
 }
