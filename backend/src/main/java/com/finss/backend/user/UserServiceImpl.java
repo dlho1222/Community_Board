@@ -7,13 +7,16 @@ import com.finss.backend.comment.CommentService;
 import com.finss.backend.post.PostResponse;
 import com.finss.backend.post.PostService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -23,6 +26,9 @@ public class UserServiceImpl implements UserService {
     private final PostService postService;
     private final CommentService commentService;
     private final PasswordEncoder passwordEncoder;
+
+    private static final int MAX_FAILED_ATTEMPTS = 5;
+    private static final int LOCK_TIME_DURATION_MINUTES = 30;
 
     @Override
     public void register(UserRegisterRequest request) {
@@ -49,30 +55,63 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public User loginWithUser(UserLoginRequest request) {
+    @Transactional(noRollbackFor = {IllegalArgumentException.class, IllegalStateException.class})
+    public User authenticate(UserLoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
+                .orElseThrow(() -> {
+                    log.warn("로그인 실패: 존재하지 않는 이메일 시도 - {}", request.getEmail());
+                    return new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
+                });
+
+        checkLockout(user);
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+            increaseFailedAttempts(user);
+            int currentAttempts = user.getFailedLoginAttempts();
+            log.warn("로그인 실패: 비밀번호 불일치 - 이메일: {}, 실패 횟수: {}", request.getEmail(), currentAttempts);
+            
+            if (currentAttempts >= MAX_FAILED_ATTEMPTS) {
+                throw new IllegalStateException("인증 시도 횟수 초과로 인해 계정이 잠겼습니다. 30분 후에 다시 시도해주세요.");
+            }
+            
+            throw new IllegalArgumentException(String.format("이메일 또는 비밀번호가 올바르지 않습니다. (실패 횟수: %d/%d)", currentAttempts, MAX_FAILED_ATTEMPTS));
         }
 
-        return user; // DTO가 아닌 엔티티 자체를 반환 (세션 저장용)
+        resetFailedAttempts(user);
+        return user;
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public UserResponse login(UserLoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
-
-
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+    private void checkLockout(User user) {
+        if (user.getLockoutTime() != null) {
+            if (user.getLockoutTime().isAfter(LocalDateTime.now())) {
+                log.warn("로그인 차단: 잠긴 계정 접속 시도 - {}", user.getEmail());
+                throw new IllegalStateException("인증 시도 횟수 초과로 인해 계정이 잠겼습니다. 30분 후에 다시 시도해주세요.");
+            } else {
+                // 잠금 시간 경과 시 초기화
+                user.setLockoutTime(null);
+                user.setFailedLoginAttempts(0);
+                userRepository.save(user);
+            }
         }
+    }
 
-        return UserResponse.fromEntity(user);
+    private void increaseFailedAttempts(User user) {
+        int newAttempts = user.getFailedLoginAttempts() + 1;
+        user.setFailedLoginAttempts(newAttempts);
+        
+        if (newAttempts >= MAX_FAILED_ATTEMPTS) {
+            user.setLockoutTime(LocalDateTime.now().plusMinutes(LOCK_TIME_DURATION_MINUTES));
+            log.warn("계정 잠금 발생: 이메일 - {}", user.getEmail());
+        }
+        userRepository.saveAndFlush(user); // 즉시 반영
+    }
+
+    private void resetFailedAttempts(User user) {
+        if (user.getFailedLoginAttempts() > 0 || user.getLockoutTime() != null) {
+            user.setFailedLoginAttempts(0);
+            user.setLockoutTime(null);
+            userRepository.saveAndFlush(user); // 즉시 반영
+        }
     }
 
     @Override

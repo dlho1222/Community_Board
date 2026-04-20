@@ -51,6 +51,14 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 계정 잠금 등 상태 오류 예외 처리 (IllegalStateException - 423 Locked)
+     */
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<String> handleIllegalStateException(IllegalStateException e) {
+        return ResponseEntity.status(HttpStatus.LOCKED).body(e.getMessage());
+    }
+
+    /**
      * 권한 부족 예외 처리 (AccessDeniedException - 403)
      */
     @ExceptionHandler(AccessDeniedException.class)

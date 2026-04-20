@@ -39,7 +39,6 @@ public class FileServiceImpl implements FileService {
         File fileEntity = File.builder()
                 .originalFileName(file.getOriginalFilename())
                 .storedFileName(storedFileName)
-                .filePath(fileStorageService.getFileStorageLocation().resolve(storedFileName).toString())
                 .fileSize(file.getSize())
                 .fileType(file.getContentType())
                 .post(post)
@@ -84,8 +83,7 @@ public class FileServiceImpl implements FileService {
         //서버 디스크에서 실제 파일 삭제
         boolean deleted = fileStorageService.deleteFile(fileEntity.getStoredFileName());
         if (!deleted) {
-            log.warn("파일 삭제 실패: DB에는 정보가 존재하나 디스크에 파일이 없습니다. 파일명: {}, 경로: {}", 
-                     fileEntity.getOriginalFileName(), fileEntity.getFilePath());
+            log.warn("파일 삭제 실패: 디스크에 파일이 없습니다. 파일명: {}", fileEntity.getOriginalFileName());
         }
 
         //DB에서 파일 정보 삭제

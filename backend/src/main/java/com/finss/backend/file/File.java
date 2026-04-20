@@ -30,9 +30,6 @@ public class File {
     @Column(nullable = false)
     private String storedFileName;
 
-    @Column(nullable = false, length = 1024)
-    private String filePath;
-
     @Column(nullable = false)
     private Long fileSize;
 

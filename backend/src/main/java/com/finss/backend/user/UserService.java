@@ -7,8 +7,7 @@ import java.util.List;
 
 public interface UserService {
     void register(UserRegisterRequest request);
-    UserResponse login(UserLoginRequest request);
-    User loginWithUser(UserLoginRequest request); //세션 저장을 위해 추가
+    User authenticate(UserLoginRequest request);
     UserResponse update(Long id, UserUpdateRequest request);
     UserResponse findById(Long id);
 

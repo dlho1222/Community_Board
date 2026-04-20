@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 /*
@@ -29,7 +30,7 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<UserResponse> loginUser(@Valid @RequestBody UserLoginRequest request, HttpServletRequest httpRequest) {
-        User user = userService.loginWithUser(request);
+        User user = userService.authenticate(request);
 
         //세션 고정 방지
         //기존 세션이 있다면 완전히 파기 (기존 세션 ID 폐기)

@@ -18,6 +18,7 @@ const LoginPage: React.FC = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [isLocked, setIsLocked] = useState(false); // 계정 잠금 상태 관리
     const navigate = useNavigate();
     const authContext = useContext(AuthContext);
 
@@ -39,6 +40,11 @@ const LoginPage: React.FC = () => {
             navigate('/'); // Redirect to homepage
         } catch (err: any) {
             if (err.response) {
+                // HTTP 423 Locked 처리
+                if (err.response.status === 423) {
+                    setIsLocked(true);
+                }
+
                 // 서버 에러 메시지가 객체인 경우를 대비해 문자열만 추출
                 const errorMessage = typeof err.response.data === 'object' 
                     ? (err.response.data.message || err.response.data.error || 'Login failed')
@@ -61,7 +67,7 @@ const LoginPage: React.FC = () => {
                     <Typography component="h1" variant="h5" align="center" sx={{ mb: 4 }}>
                         Login
                     </Typography>
-                    {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+                    {error && <Alert severity={isLocked ? "warning" : "error"} sx={{ mb: 2 }}>{error}</Alert>}
                     <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
                         <TextField
                             margin="normal"
@@ -72,6 +78,7 @@ const LoginPage: React.FC = () => {
                             name="email"
                             autoComplete="email"
                             autoFocus
+                            disabled={isLocked}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                         />
@@ -84,6 +91,7 @@ const LoginPage: React.FC = () => {
                             type="password"
                             id="password"
                             autoComplete="current-password"
+                            disabled={isLocked}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                         />
@@ -92,9 +100,9 @@ const LoginPage: React.FC = () => {
                             fullWidth
                             variant="contained"
                             sx={{ mt: 3, mb: 2 }}
-                            disabled={loading}
+                            disabled={loading || isLocked}
                         >
-                            {loading ? <CircularProgress size={24} color="inherit" /> : 'Login'}
+                            {loading ? <CircularProgress size={24} color="inherit" /> : (isLocked ? 'Account Locked' : 'Login')}
                         </Button>
                     </Box>
                 </CardContent>
