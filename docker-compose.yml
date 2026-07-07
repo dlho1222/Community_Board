@@ -1,29 +1,40 @@
-# docker-compose.yml
 version: '3.8'
+
 services:
   db:
     image: mysql:8.0
     container_name: mysql-db
     environment:
-      MYSQL_ROOT_PASSWORD: root_password
-      MYSQL_DATABASE: my_project_db
+      # 1. root 비밀번호 설정
+      MYSQL_ROOT_PASSWORD: password1234!
+      # 2. 사용할 DB 이름 생성
+      MYSQL_DATABASE: Community_Board_DB
+      # 3. 사용할 일반 사용자 생성 (properties와 일치)
+      MYSQL_USER: board_admin
+      MYSQL_PASSWORD: password1234!
     ports:
       - "3306:3306"
     volumes:
       - ./mysql_data:/var/lib/mysql
 
   backend:
-    image: your-docker-id/backend-image:latest
+    image: dlho1222/backend-app:latest
     container_name: spring-api
     depends_on:
       - db
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/my_project_db?useSSL=false
+      # 중요: IP 주소(192.168...) 대신 도커 서비스 이름인 'db'를 사용해야 합니다.
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/Community_Board_DB?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+      SPRING_DATASOURCE_USERNAME: board_admin
+      SPRING_DATASOURCE_PASSWORD: password1234!
+    # 파일 업로드를 사용하신다면 아래 볼륨 설정도 유용합니다.
+    volumes:
+      - ./uploads:/app/uploads
 
   frontend:
-    image: your-docker-id/frontend-image:latest
+    image: dlho1222/frontend-app:latest
     container_name: react-web
     ports:
       - "80:80"
