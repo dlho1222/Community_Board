@@ -2,6 +2,9 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.3.0'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.cyclonedx.bom' version '1.8.2'
+    id 'org.spdx.sbom' version '0.7.0'
+    id 'org.owasp.dependencycheck' version '9.0.9'
 }
 
 group = 'com.finss'
@@ -25,6 +28,15 @@ repositories {
 }
 
 dependencies {
+    // --- SCA 실습용 의도적 취약 의존성 추가 ---
+    implementation 'org.apache.logging.log4j:log4j-core:2.14.1'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.0'
+    implementation 'org.springframework:spring-webmvc:5.3.17'
+    implementation 'org.apache.commons:commons-collections4:4.0'
+    implementation 'org.apache.poi:poi:3.17'
+    implementation 'org.apache.poi:poi-ooxml:3.17'
+    implementation 'com.h2database:h2:1.4.199'
+    implementation 'org.apache.tika:tika-core:1.24.1'
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     // Security 추가
@@ -41,6 +53,12 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
+
+dependencyCheck {
+       autoUpdate = false        // 인터넷 접속 차단
+       failOnError = false       // 분석 실패해도 빌드는 성공시킴 (결과 확인용)
+       format = 'JSON'           // 우리가 필요한 JSON 형식
+   }
 
 tasks.named('test') {
     useJUnitPlatform()
