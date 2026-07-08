@@ -15,7 +15,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - ./mysql_data:/var/lib/mysql
+      - mysql_data:/var/lib/mysql
 
   backend:
     image: dlho1222/backend-app:latest
@@ -41,3 +41,6 @@ services:
       - "80:80"
     depends_on:
       - backend
+
+volumes:
+  mysql_data:
