@@ -17,6 +17,8 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.csrf.CsrfToken;
 
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -37,7 +39,10 @@ public class SecurityConfig {
             .cors(Customizer.withDefaults()) // CORS 설정 활성화
             .csrf(csrf -> csrf
                 // 로그인과 회원가입 요청은 CSRF 검증에서 제외
-                .ignoringRequestMatchers("/api/users/login", "/api/users/register")
+                .ignoringRequestMatchers(
+                    new AntPathRequestMatcher("/api/users/login"),
+                    new AntPathRequestMatcher("/api/users/register")
+                )
                 // 쿠키 기반 CSRF 토큰 저장소 설정 (HttpOnly=false)
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 .csrfTokenRequestHandler(requestHandler)

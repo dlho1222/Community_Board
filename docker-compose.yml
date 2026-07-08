@@ -29,6 +29,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/Community_Board_DB?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
       SPRING_DATASOURCE_USERNAME: board_admin
       SPRING_DATASOURCE_PASSWORD: password1234!
+      FILE_UPLOAD_DIR: /app/uploads
     # 파일 업로드를 사용하신다면 아래 볼륨 설정도 유용합니다.
     volumes:
       - ./uploads:/app/uploads
