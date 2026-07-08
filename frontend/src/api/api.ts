@@ -9,7 +9,7 @@ const getCookie = (name: string) => {
 };
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080',
+    baseURL: import.meta.env.VITE_API_URL || 'http://192.168.111.130:8080',
     headers: {
         'Content-Type': 'application/json',
     },
