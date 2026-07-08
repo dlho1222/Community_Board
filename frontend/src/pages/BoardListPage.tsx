@@ -198,7 +198,7 @@ const BoardListPage: React.FC = () => {
                     searchInputRef={searchInputRef}
                     loading={loading}
                 />
-                <Button variant="contained" onClick={handleWritePost}>Write Post</Button>
+                <Button variant="contained" onClick={handleWritePost}>게시글 작성</Button>
             </Box>
 
             <TableContainer component={Paper}>
