@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  dtrack-apiserver:
+    image: dependencytrack/apiserver:latest
+    container_name: dtrack-apiserver
+    ports:
+      - "8081:8081"
+    volumes:
+      - dtrack_data:/data
+    # Dependency-Track 백엔드는 자바 기반으로 메모리를 꽤 사용하므로 최소 사양을 부여합니다.
+    deploy:
+      resources:
+        limits:
+          memory: 2048m
+    restart: unless-stopped
+
+  dtrack-frontend:
+    image: dependencytrack/frontend:latest
+    container_name: dtrack-frontend
+    depends_on:
+      - dtrack-apiserver
+    environment:
+      # 중요: 윈도우 브라우저에서 접속할 때 API 서버를 찾아갈 수 있도록 
+      # localhost 대신 [리눅스 VM의 IP 주소]를 적어주어야 합니다.
+      # 예: http://192.168.111.xxx:8081
+      - API_BASE_URL=http://192.168.111.130:8081
+    ports:
+      - "8082:8080"
+    restart: unless-stopped
+
+volumes:
+  dtrack_data:
