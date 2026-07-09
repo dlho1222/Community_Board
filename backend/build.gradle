@@ -34,14 +34,14 @@ repositories {
 
 dependencies {
     // --- SCA 실습용 의도적 취약 의존성 추가 (런타임 충돌 방지를 위해 scaOnly로 격리) ---
-    scaOnly 'org.apache.logging.log4j:log4j-core:2.14.1'
-    scaOnly 'com.fasterxml.jackson.core:jackson-databind:2.13.0'
-    scaOnly 'org.springframework:spring-webmvc:5.3.17'
-    scaOnly 'org.apache.commons:commons-collections4:4.0'
-    scaOnly 'org.apache.poi:poi:3.17'
-    scaOnly 'org.apache.poi:poi-ooxml:3.17'
-    scaOnly 'com.h2database:h2:1.4.199'
-    scaOnly 'org.apache.tika:tika-core:1.24.1'
+    // scaOnly 'org.apache.logging.log4j:log4j-core:2.14.1'
+    // scaOnly 'com.fasterxml.jackson.core:jackson-databind:2.13.0'
+    // scaOnly 'org.springframework:spring-webmvc:5.3.17'
+    // scaOnly 'org.apache.commons:commons-collections4:4.0'
+    // scaOnly 'org.apache.poi:poi:3.17'
+    // scaOnly 'org.apache.poi:poi-ooxml:3.17'
+    // scaOnly 'com.h2database:h2:1.4.199'
+    // scaOnly 'org.apache.tika:tika-core:1.24.1'
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     // Security 추가

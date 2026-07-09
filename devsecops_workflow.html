@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VEX 통합 DevSecOps 보안 파이프라인 워크플로우</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Mermaid.js CDN for flowchart rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            flowchart: { useMaxWidth: false, htmlLabels: true }
+        });
+    </script>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #151d30;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.15);
+            --success: #10b981;
+            --error: #ef4444;
+            --border-color: #24324f;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 950px;
+            width: 100%;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Flowchart styling - Expanded for visibility */
+        .chart-container {
+            display: block;
+            background: #0f1524;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            overflow-x: auto; /* Allow horizontal scrolling if container is too small */
+        }
+
+        .mermaid {
+            min-width: 800px; /* Force minimum width to prevent scaling issues */
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Steps styling */
+        .step-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .step-item {
+            display: flex;
+            gap: 20px;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary);
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .step-item:hover {
+            transform: translateX(5px);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .step-num {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .step-content h3 {
+            margin: 0 0 8px 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .step-content p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Code highlight simulation */
+        pre {
+            background-color: #0f1524;
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            color: #38bdf8;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            margin: 10px 0 0 0;
+        }
+
+        .alert-box {
+            background-color: var(--primary-glow);
+            border: 1px solid var(--primary);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ VEX 통합 DevSecOps 파이프라인</h1>
+        <p class="subtitle">소스코드 스캔부터 VEX 예외 처리, 그리고 Dependency-Track 연동까지의 전체 흐름</p>
+
+        <!-- 1. Flowchart Card -->
+        <div class="card">
+            <div class="card-title">📊 전체 워크플로우 흐름도</div>
+            <div class="chart-container">
+                <div class="mermaid">
+                graph TD
+                    Start[1. 개발자 코드 & VEX 설정 푸시] --> SCM[2. 젠킨스 자동 빌드 시작]
+                    
+                    SCM --> SourceScan[3. 소스코드 SBOM 생성 - Syft]
+                    SourceScan --> Grype1[4. 소스코드 취약점 스캔 - Grype]
+                    
+                    %% VEX 필터링 엔진
+                    Grype1 --> VEXFilter1{".grype.yaml 필터 적용"}
+                    VEXFilter1 -- "허용 목록에 있는 CVE인가?" --> Ignore1[임시 예외 처리 - 패스]
+                    VEXFilter1 -- "허용되지 않은 High 이상 CVE인가?" --> Block1[❌ 1차 차단: 빌드 즉시 중단]
+                    
+                    Ignore1 --> BuildJar[5. 백엔드 JAR 빌드]
+                    BuildJar --> BuildImg[6. 도커 이미지 빌드]
+                    
+                    BuildImg --> ImageScan[7. 이미지 SBOM 생성 - Syft]
+                    ImageScan --> Grype2[8. 이미지 최종 취약점 스캔]
+                    
+                    Grype2 --> VEXFilter2{".grype.yaml 필터 적용"}
+                    VEXFilter2 -- "허용되지 않은 High 이상 CVE인가?" --> Block2[❌ 2차 차단: 빌드 즉시 중단]
+                    VEXFilter2 -- "모든 취약점 통과/예외처리됨" --> PushImg[9. 도커 허브 이미지 푸시]
+                    
+                    PushImg --> DTrack[10. Dependency-Track SBOM 업로드]
+                    DTrack --> Deploy[11. 실서버 무중단 배포 완료 - Docker Compose]
+
+                    style Block1 fill:#582525,stroke:#ef4444,stroke-width:2px;
+                    style Block2 fill:#582525,stroke:#ef4444,stroke-width:2px;
+                    style DTrack fill:#1c4e3a,stroke:#10b981,stroke-width:2px;
+                    style Deploy fill:#1c4e3a,stroke:#10b981,stroke-width:2px;
+                </div>
+            </div>
+            <div class="alert-box">
+                <strong>💡 핵심 포인트:</strong> 취약점이 발견되면 빌드를 그 자리에서 중단하는 <strong>Fail-Fast 대원칙</strong>을 준수합니다. 다만 보안상 문제가 없음이 증명되었거나 임시 승인된 취약점은 <strong>.grype.yaml (VEX 설정)</strong>을 통해 안전하게 패스시켜 최종 배포와 Dependency-Track 업로드까지 완주할 수 있습니다.
+            </div>
+        </div>
+
+        <!-- 2. Steps Card -->
+        <div class="card">
+            <div class="card-title">📝 단계별 상세 프로세스 해설</div>
+            <div class="step-list">
+                
+                <div class="step-item">
+                    <div class="step-num">01</div>
+                    <div class="step-content">
+                        <h3>VEX 설정 문서화</h3>
+                        <p>개발자는 임시 허용하거나 예외로 지정할 취약점 목록을 명시한 <code>.grype.yaml</code> 파일을 프로젝트 루트 폴더에 작성하여 코드와 함께 푸시합니다.</p>
+                        <pre>ignore:
+  - vulnerability: GHSA-83qj-6fr2-vhqg
+    reason: "Will upgrade Tomcat in the next sprint."</pre>
+                    </div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-num">02</div>
+                    <div class="step-content">
+                        <h3>1차 소스코드 스캔 (Source SCA)</h3>
+                        <p>코드가 유입되면 <strong>Syft</strong>가 코드 기반의 SBOM(라이브러리 목록)을 만듭니다. 이어 <strong>Grype</strong>가 스캔하되, 앞서 등록된 VEX 필터 규칙에 포함된 취약점은 결과에서 자동 필터링하여 패스시킵니다.</p>
+                    </div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-num">03</div>
+                    <div class="step-content">
+                        <h3>빌드 및 패키징</h3>
+                        <p>1차 스캔을 안전하게 통과한 청정 소스코드를 컴파일하여 자바 JAR 실행 파일을 빌드하고, 이를 도커 이미지로 최종 패키징합니다.</p>
+                    </div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-num">04</div>
+                    <div class="step-content">
+                        <h3>2차 최종 이미지 스캔 (Binary SCA)</h3>
+                        <p>완성된 도커 이미지를 대상으로 <strong>Syft</strong>가 다시 내부 분석표를 뽑고, <strong>Grype</strong>가 이미지 안에 남아있을 수 있는 OS 취약점 등을 최종 필터링합니다. 이때도 남은 High 이상 취약점이 있다면 배포를 원천 차단합니다.</p>
+                    </div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-num">05</div>
+                    <div class="step-content">
+                        <h3>보안 검증 완료 및 배포 자동화</h3>
+                        <p>2차 최종 관문까지 모두 통과한 안전한 배포용 이미지를 도커 허브에 올리고, 최종 SBOM 분석표를 <strong>Dependency-Track 서버에 업로드(연동)</strong>합니다. 연동이 끝나면 서버에 무중단 배포를 완료합니다.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</body>
+</html>
