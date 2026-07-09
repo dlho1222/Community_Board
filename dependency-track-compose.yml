@@ -5,7 +5,7 @@ services:
     image: dependencytrack/apiserver:latest
     container_name: dtrack-apiserver
     ports:
-      - "8089:8081"
+      - "8089:8080"
     volumes:
       - dtrack_data:/data
     environment:
