@@ -11,11 +11,7 @@ services:
     environment:
       # 초기 부팅 시 대량의 CVE 다운로드 작업을 비활성화하여 VM 과부하 및 다운을 방지합니다.
       - ALPINE_NVD_FEEDS_ENABLED=false
-    # Dependency-Track 백엔드는 자바 기반으로 메모리를 꽤 사용하므로 최소 사양을 부여합니다.
-    deploy:
-      resources:
-        limits:
-          memory: 2048m
+      - ALPINE_NIST_FEEDS_ENABLED=false
     restart: unless-stopped
 
   dtrack-frontend:
