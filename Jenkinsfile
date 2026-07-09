@@ -27,9 +27,12 @@ pipeline {
         stage('2. Source SCA Scan (Build SBOM)') {
             steps {
                 echo '🔍 [소스코드 빌드 SBOM 스캔 시작]...'
-                // 1. 소스 디렉토리로부터 SBOM 추출 (CycloneDX JSON 포맷)
-                sh 'syft dir:./backend -o cyclonedx-json=backend-build-sbom.json'
-                sh 'syft dir:./frontend -o cyclonedx-json=frontend-build-sbom.json'
+                // 이전 빌드가 남긴 컴파일 찌꺼기 폴더를 삭제하여 1차 스캔 시 오염을 방지합니다.
+                sh 'rm -rf backend/build'
+                
+                // 1. 소스 디렉토리로부터 SBOM 추출 (CycloneDX 1.6 버전으로 고정)
+                sh 'syft dir:./backend -o cyclonedx-json@1.6=backend-build-sbom.json'
+                sh 'syft dir:./frontend -o cyclonedx-json@1.6=frontend-build-sbom.json'
                 
                 // 2. Grype 취약점 스캔 실행
                 // --fail-on high 옵션: High 등급 이상의 취약점이 발견되면 빌드를 에러 상태로 강제 종료시킵니다.
@@ -60,9 +63,9 @@ pipeline {
         stage('5. Binary SCA Scan (Docker Image SBOM)') {
             steps {
                 echo '🔍 [바이너리 Docker 이미지 SBOM 스캔 시작]...'
-                // 1. 빌드된 Docker 이미지의 파일 시스템으로부터 SBOM 추출
-                sh "syft ${DOCKER_HUB_ID}/backend-app:latest -o cyclonedx-json=backend-image-sbom.json"
-                sh "syft ${DOCKER_HUB_ID}/frontend-app:latest -o cyclonedx-json=frontend-image-sbom.json"
+                // 1. 빌드된 Docker 이미지의 파일 시스템으로부터 SBOM 추출 (CycloneDX 1.6 버전으로 고정)
+                sh "syft ${DOCKER_HUB_ID}/backend-app:latest -o cyclonedx-json@1.6=backend-image-sbom.json"
+                sh "syft ${DOCKER_HUB_ID}/frontend-app:latest -o cyclonedx-json@1.6=frontend-image-sbom.json"
                 
                 // 2. Grype 취약점 스캔 실행 (OS 패키지 및 런타임 취약점 검증)
                 sh 'grype backend-image-sbom.json --fail-on high'
