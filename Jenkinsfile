@@ -6,7 +6,7 @@ pipeline {
         GIT_URL = 'https://github.com/dlho1222/Community_Board'
         
         // 1. 본인의 Dependency-Track 서버 URL 주소로 변경하세요 (예: http://IP:PORT)
-        DTRACK_URL = 'http://localhost:8083' 
+        DTRACK_URL = 'http://localhost:8089' 
         
         // 2. Dependency-Track에 등록할 프로젝트 정보 (각각에 고유 UUID가 부여됩니다)
         // 수동 테스트 시 생성된 프로젝트 ID(UUID)가 있다면 아래 기재하여 덮어쓰기가 가능하고,
