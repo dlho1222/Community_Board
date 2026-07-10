@@ -67,46 +67,25 @@ pipeline {
                 sh "syft ${DOCKER_HUB_ID}/backend-app:latest -o cyclonedx-json@1.6=backend-image-sbom.json"
                 sh "syft ${DOCKER_HUB_ID}/frontend-app:latest -o cyclonedx-json@1.6=frontend-image-sbom.json"
                 
-                // 2. Dependency-Track API를 호출하여 백엔드/프론트엔드 VEX 규칙 적용
-                withCredentials([string(credentialsId: 'dependency-track-api-key', variable: 'DTRACK_API_KEY')]) {
-                    script {
-                        // 백엔드 VEX 조회 및 스캔
-                        sh """
-                            echo "🔍 [백엔드 이미지 VEX 확인 중]..."
-                            RESPONSE=\$(curl -s -X GET "${DTRACK_URL}/api/v1/project/lookup?name=${BACKEND_PROJECT_NAME}&version=${BACKEND_PROJECT_VERSION}" \
-                                 -H "X-Api-Key: ${DTRACK_API_KEY}" \
-                                 -H "Accept: application/json")
-                            
-                            # JSON 파싱 도구 선택적 사용 (jq -> python -> grep/sed 순서로 안전하게 추출)
-                            BACKEND_UUID=""
-                            if command -v jq >/dev/null 2>&1; then
-                                BACKEND_UUID=\$(echo "\$RESPONSE" | jq -r '.uuid')
-                            elif command -v python3 >/dev/null 2>&1; then
-                                BACKEND_UUID=\$(echo "\$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin).get('uuid', ''))" 2>/dev/null)
-                            else
-                                BACKEND_UUID=\$(echo "\$RESPONSE" | grep -o '"uuid"[[:space:]]*:[[:space:]]*"[^"]*' | head -n 1 | cut -d'"' -f4)
-                            fi
+                // 2. Findings 파싱용 표준 Python 스크립트를 파일로 분리하여 작성 (Groovy 따옴표 충돌 방지)
+                writeFile file: 'parse_findings.py', text: '''
+import json
+import os
+import sys
 
-                            if [ -n "\$BACKEND_UUID" ] && [ "\$BACKEND_UUID" != "null" ]; then
-                                echo "✅ 백엔드 프로젝트 UUID 검색 성공: \$BACKEND_UUID"
-                                echo "📥 Dependency-Track으로부터 취약점 탐지 결과(Findings) 다운로드 중..."
-                                curl -s -X GET "${DTRACK_URL}/api/v1/finding/project/\$BACKEND_UUID" \
-                                     -H "X-Api-Key: ${DTRACK_API_KEY}" \
-                                     -H "Accept: application/json" \
-                                     -o backend-findings.json
-                                
-                                # 파이썬 명령어로 Findings(디트랙 예외조치)를 파싱하여 backend-grype.yaml 필터 작성
-                                python3 -c "
-import json, os
-if os.path.exists('backend-findings.json'):
-    try:
-        with open('backend-findings.json', 'r') as f:
-            data = json.load(f)
-    except Exception as e:
-        print('JSON parsing error:', e)
-        data = []
-else:
-    data = []
+findings_file = sys.argv[1]
+output_file = sys.argv[2]
+
+if not os.path.exists(findings_file):
+    print(f"File {findings_file} not found.")
+    sys.exit(0)
+
+try:
+    with open(findings_file, 'r') as f:
+        data = json.load(f)
+except Exception as e:
+    print(f"Error parsing JSON: {e}")
+    sys.exit(0)
 
 ignored = []
 for item in data:
@@ -118,15 +97,43 @@ for item in data:
         if vuln_id:
             ignored.append(vuln_id)
 
-with open('backend-grype.yaml', 'w') as out:
-    out.write('ignore:\\n')
+with open(output_file, 'w') as out:
+    out.write("ignore:\\n")
     if ignored:
         for v in sorted(set(ignored)):
-            out.write(f'  - vulnerability: \"{v}\"\\n    reason: \"Suppressed in Dependency-Track\"\\n')
-        print(f'✅ Generated backend-grype.yaml with {len(set(ignored))} ignored CVEs.')
+            out.write(f"  - vulnerability: \\"{v}\\"\\n    reason: \\"Suppressed in Dependency-Track\\"\\n")
+        print(f"✅ Generated {output_file} with {len(set(ignored))} ignored CVEs.")
     else:
-        print('ℹ️ No suppressed CVEs found in Dependency-Track.')
-" 2>/dev/null || true
+        print(f"ℹ️ No suppressed CVEs found for {output_file}.")
+'''
+
+                // 3. Dependency-Track API를 호출하여 백엔드/프론트엔드 VEX 규칙 적용
+                withCredentials([string(credentialsId: 'dependency-track-api-key', variable: 'DTRACK_API_KEY')]) {
+                    script {
+                        // 백엔드 VEX 조회 및 스캔
+                        sh """
+                            echo "🔍 [백엔드 이미지 VEX 확인 중]..."
+                            RESPONSE=\$(curl -s -X GET "${DTRACK_URL}/api/v1/project/lookup?name=${BACKEND_PROJECT_NAME}&version=${BACKEND_PROJECT_VERSION}" \
+                                 -H "X-Api-Key: ${DTRACK_API_KEY}" \
+                                 -H "Accept: application/json")
+                            
+                            BACKEND_UUID=""
+                            if command -v jq >/dev/null 2>&1; then
+                                BACKEND_UUID=\$(echo "\$RESPONSE" | jq -r '.uuid')
+                            else
+                                BACKEND_UUID=\$(echo "\$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin).get('uuid', ''))" 2>/dev/null)
+                            fi
+
+                            if [ -n "\$BACKEND_UUID" ] && [ "\$BACKEND_UUID" != "null" ]; then
+                                echo "✅ 백엔드 프로젝트 UUID 검색 성공: \$BACKEND_UUID"
+                                echo "📥 Dependency-Track으로부터 취약점 탐지 결과(Findings) 다운로드 중..."
+                                curl -s -X GET "${DTRACK_URL}/api/v1/finding/project/\$BACKEND_UUID" \
+                                     -H "X-Api-Key: ${DTRACK_API_KEY}" \
+                                     -H "Accept: application/json" \
+                                     -o backend-findings.json
+                                
+                                # 분리된 파이썬 스크립트 실행
+                                python3 parse_findings.py backend-findings.json backend-grype.yaml
                                 
                                 if [ -f backend-grype.yaml ]; then
                                     echo "🛡️ 동적 필터 파일(backend-grype.yaml)을 적용하여 백엔드 이미지 취약점 스캔 실행..."
@@ -151,10 +158,8 @@ with open('backend-grype.yaml', 'w') as out:
                             FRONTEND_UUID=""
                             if command -v jq >/dev/null 2>&1; then
                                 FRONTEND_UUID=\$(echo "\$RESPONSE" | jq -r '.uuid')
-                            elif command -v python3 >/dev/null 2>&1; then
-                                FRONTEND_UUID=\$(echo "\$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin).get('uuid', ''))" 2>/dev/null)
                             else
-                                FRONTEND_UUID=\$(echo "\$RESPONSE" | grep -o '"uuid"[[:space:]]*:[[:space:]]*"[^"]*' | head -n 1 | cut -d'"' -f4)
+                                FRONTEND_UUID=\$(echo "\$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin).get('uuid', ''))" 2>/dev/null)
                             fi
 
                             if [ -n "\$FRONTEND_UUID" ] && [ "\$FRONTEND_UUID" != "null" ]; then
@@ -165,36 +170,8 @@ with open('backend-grype.yaml', 'w') as out:
                                      -H "Accept: application/json" \
                                      -o frontend-findings.json
                                 
-                                python3 -c "
-import json, os
-if os.path.exists('frontend-findings.json'):
-    try:
-        with open('frontend-findings.json', 'r') as f:
-            data = json.load(f)
-    except Exception as e:
-        print('JSON parsing error:', e)
-        data = []
-else:
-    data = []
-
-ignored = []
-for item in data:
-    analysis = item.get('analysis', {})
-    vuln = item.get('vulnerability', {})
-    vuln_id = vuln.get('vulnId')
-    if analysis.get('isSuppressed') == True or analysis.get('state') in ['NOT_AFFECTED', 'FALSE_POSITIVE', 'RESOLVED', 'WONT_FIX']:
-        if vuln_id:
-            ignored.append(vuln_id)
-
-with open('frontend-grype.yaml', 'w') as out:
-    out.write('ignore:\\n')
-    if ignored:
-        for v in sorted(set(ignored)):
-            out.write(f'  - vulnerability: \"{v}\"\\n    reason: \"Suppressed in Dependency-Track\"\\n')
-        print(f'✅ Generated frontend-grype.yaml with {len(set(ignored))} ignored CVEs.')
-    else:
-        print('ℹ️ No suppressed CVEs found in Dependency-Track.')
-" 2>/dev/null || true
+                                # 분리된 파이썬 스크립트 실행
+                                python3 parse_findings.py frontend-findings.json frontend-grype.yaml
                                 
                                 if [ -f frontend-grype.yaml ]; then
                                     echo "🛡️ 동적 필터 파일(frontend-grype.yaml)을 적용하여 프론트엔드 이미지 취약점 스캔 실행..."
