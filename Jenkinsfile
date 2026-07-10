@@ -166,12 +166,6 @@ pipeline {
             }
         }
 
-                    }
-                }
-                echo '✅ [Dependency-Track SBOM 전송 완료]'
-            }
-        }
-
         stage('8. Deploy (Docker Compose)') {
             steps {
                 script {
