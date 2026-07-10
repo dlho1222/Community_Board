@@ -4,6 +4,7 @@ services:
   db:
     image: mysql:8.0
     container_name: mysql-db
+    restart: always
     environment:
       # 1. root 비밀번호 설정
       MYSQL_ROOT_PASSWORD: password1234!
@@ -20,6 +21,7 @@ services:
   backend:
     image: dlho1222/backend-app:latest
     container_name: spring-api
+    restart: always
     depends_on:
       - db
     ports:
@@ -37,6 +39,7 @@ services:
   frontend:
     image: dlho1222/frontend-app:latest
     container_name: react-web
+    restart: always
     ports:
       - "80:80"
     depends_on:

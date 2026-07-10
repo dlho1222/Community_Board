@@ -135,10 +135,12 @@ pipeline {
     }
 
     post {
+        always {
+            // 빌드 성공/실패 여부와 관계없이 생성된 모든 SBOM json 파일을 젠킨스 빌드 이력에 보관
+            archiveArtifacts artifacts: '*-sbom.json', followSymlinks: false
+        }
         success {
             echo '🎉 취약점 통과 및 배포에 최종 성공했습니다!'
-            // 생성된 모든 SBOM json 파일을 젠킨스 빌드 이력에 영구 박제 보관
-            archiveArtifacts artifacts: '*-sbom.json', followSymlinks: false
         }
         failure {
             echo '❌ 취약점 탐지 또는 배포 에러가 발생했습니다. 로그를 확인하세요.'
