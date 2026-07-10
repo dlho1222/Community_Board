@@ -67,10 +67,86 @@ pipeline {
                 sh "syft ${DOCKER_HUB_ID}/backend-app:latest -o cyclonedx-json@1.6=backend-image-sbom.json"
                 sh "syft ${DOCKER_HUB_ID}/frontend-app:latest -o cyclonedx-json@1.6=frontend-image-sbom.json"
                 
-                // 2. Grype 취약점 스캔 실행 (OS 패키지 및 런타임 취약점 검증)
-                sh 'grype backend-image-sbom.json --by-cve --fail-on high'
-                sh 'grype frontend-image-sbom.json --by-cve --fail-on high'
-                echo '✅ [바이너리 Docker 이미지 SBOM 스캔 성공] - 치명적인 취약점이 없습니다.'
+                // 2. Dependency-Track API를 호출하여 백엔드/프론트엔드 VEX 규칙 적용
+                withCredentials([string(credentialsId: 'dependency-track-api-key', variable: 'DTRACK_API_KEY')]) {
+                    script {
+                        // 백엔드 VEX 조회 및 스캔
+                        sh """
+                            echo "🔍 [백엔드 이미지 VEX 확인 중]..."
+                            RESPONSE=\$(curl -s -X GET "${DTRACK_URL}/api/v1/project/lookup?name=${BACKEND_PROJECT_NAME}&version=${BACKEND_PROJECT_VERSION}" \
+                                 -H "X-Api-Key: ${DTRACK_API_KEY}" \
+                                 -H "Accept: application/json")
+                            
+                            # JSON 파싱 도구 선택적 사용 (jq -> python -> grep/sed 순서로 안전하게 추출)
+                            BACKEND_UUID=""
+                            if command -v jq >/dev/null 2>&1; then
+                                BACKEND_UUID=\$(echo "\$RESPONSE" | jq -r '.uuid')
+                            elif command -v python3 >/dev/null 2>&1; then
+                                BACKEND_UUID=\$(echo "\$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin).get('uuid', ''))" 2>/dev/null)
+                            else
+                                BACKEND_UUID=\$(echo "\$RESPONSE" | grep -o '"uuid"[[:space:]]*:[[:space:]]*"[^"]*' | head -n 1 | cut -d'"' -f4)
+                            fi
+
+                            if [ -n "\$BACKEND_UUID" ] && [ "\$BACKEND_UUID" != "null" ]; then
+                                echo "✅ 백엔드 프로젝트 UUID 검색 성공: \$BACKEND_UUID"
+                                echo "📥 Dependency-Track으로부터 VEX 문서 다운로드 중..."
+                                curl -s -X GET "${DTRACK_URL}/api/v1/vex/project/\$BACKEND_UUID" \
+                                     -H "X-Api-Key: ${DTRACK_API_KEY}" \
+                                     -H "Accept: application/json" \
+                                     -o backend-vex.json
+                                
+                                if [ -f backend-vex.json ] && [ \$(stat -c%s backend-vex.json) -gt 10 ]; then
+                                    echo "🛡️ VEX 필터를 적용하여 백엔드 이미지 취약점 스캔 실행..."
+                                    grype backend-image-sbom.json --vex backend-vex.json --by-cve --fail-on high
+                                else
+                                    echo "⚠️ VEX 문서가 비어 있거나 손상되었습니다. 필터 없이 스캔합니다..."
+                                    grype backend-image-sbom.json --by-cve --fail-on high
+                                fi
+                            else
+                                echo "⚠️ Dependency-Track에 백엔드 프로젝트가 등록되지 않았습니다. 필터 없이 스캔합니다..."
+                                grype backend-image-sbom.json --by-cve --fail-on high
+                            fi
+                        """
+
+                        // 프론트엔드 VEX 조회 및 스캔
+                        sh """
+                            echo "🔍 [프론트엔드 이미지 VEX 확인 중]..."
+                            RESPONSE=\$(curl -s -X GET "${DTRACK_URL}/api/v1/project/lookup?name=${FRONTEND_PROJECT_NAME}&version=${FRONTEND_PROJECT_VERSION}" \
+                                 -H "X-Api-Key: ${DTRACK_API_KEY}" \
+                                 -H "Accept: application/json")
+                            
+                            FRONTEND_UUID=""
+                            if command -v jq >/dev/null 2>&1; then
+                                FRONTEND_UUID=\$(echo "\$RESPONSE" | jq -r '.uuid')
+                            elif command -v python3 >/dev/null 2>&1; then
+                                FRONTEND_UUID=\$(echo "\$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin).get('uuid', ''))" 2>/dev/null)
+                            else
+                                FRONTEND_UUID=\$(echo "\$RESPONSE" | grep -o '"uuid"[[:space:]]*:[[:space:]]*"[^"]*' | head -n 1 | cut -d'"' -f4)
+                            fi
+
+                            if [ -n "\$FRONTEND_UUID" ] && [ "\$FRONTEND_UUID" != "null" ]; then
+                                echo "✅ 프론트엔드 프로젝트 UUID 검색 성공: \$FRONTEND_UUID"
+                                echo "📥 Dependency-Track으로부터 VEX 문서 다운로드 중..."
+                                curl -s -X GET "${DTRACK_URL}/api/v1/vex/project/\$FRONTEND_UUID" \
+                                     -H "X-Api-Key: ${DTRACK_API_KEY}" \
+                                     -H "Accept: application/json" \
+                                     -o frontend-vex.json
+                                
+                                if [ -f frontend-vex.json ] && [ \$(stat -c%s frontend-vex.json) -gt 10 ]; then
+                                    echo "🛡️ VEX 필터를 적용하여 프론트엔드 이미지 취약점 스캔 실행..."
+                                    grype frontend-image-sbom.json --vex frontend-vex.json --by-cve --fail-on high
+                                else
+                                    echo "⚠️ VEX 문서가 비어 있거나 손상되었습니다. 필터 없이 스캔합니다..."
+                                    grype frontend-image-sbom.json --by-cve --fail-on high
+                                fi
+                            else
+                                echo "⚠️ Dependency-Track에 프론트엔드 프로젝트가 등록되지 않았습니다. 필터 없이 스캔합니다..."
+                                grype frontend-image-sbom.json --by-cve --fail-on high
+                            fi
+                        """
+                    }
+                }
+                echo '✅ [바이너리 Docker 이미지 SBOM 스캔 성공] - 예외 처리 완료 및 통과'
             }
         }
 
