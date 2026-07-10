@@ -60,156 +60,17 @@ pipeline {
             }
         }
 
-        stage('5. Binary SCA Scan (Docker Image SBOM)') {
+        stage('5. Dependency-Track SBOM Upload') {
             steps {
-                echo '🔍 [바이너리 Docker 이미지 SBOM 스캔 시작]...'
+                echo '📤 [Dependency-Track으로 SBOM 전송 및 선전송 시작]...'
                 // 1. 빌드된 Docker 이미지의 파일 시스템으로부터 SBOM 추출 (CycloneDX 1.6 버전으로 고정)
                 sh "syft ${DOCKER_HUB_ID}/backend-app:latest -o cyclonedx-json@1.6=backend-image-sbom.json"
                 sh "syft ${DOCKER_HUB_ID}/frontend-app:latest -o cyclonedx-json@1.6=frontend-image-sbom.json"
-                
-                // 2. Findings 파싱용 표준 Python 스크립트를 파일로 분리하여 작성 (Groovy 따옴표 충돌 방지)
-                writeFile file: 'parse_findings.py', text: '''
-import json
-import os
-import sys
 
-findings_file = sys.argv[1]
-output_file = sys.argv[2]
-
-if not os.path.exists(findings_file):
-    print(f"File {findings_file} not found.")
-    sys.exit(0)
-
-try:
-    with open(findings_file, 'r') as f:
-        data = json.load(f)
-except Exception as e:
-    print(f"Error parsing JSON: {e}")
-    sys.exit(0)
-
-ignored = []
-for item in data:
-    analysis = item.get('analysis', {})
-    vuln = item.get('vulnerability', {})
-    vuln_id = vuln.get('vulnId')
-    # Suppressed 이거나 VEX 상태가 NOT_AFFECTED/FALSE_POSITIVE 인 경우 예외처리 목록에 추가
-    if analysis.get('isSuppressed') == True or analysis.get('state') in ['NOT_AFFECTED', 'FALSE_POSITIVE', 'RESOLVED', 'WONT_FIX']:
-        if vuln_id:
-            ignored.append(vuln_id)
-
-with open(output_file, 'w') as out:
-    out.write("ignore:\\n")
-    if ignored:
-        for v in sorted(set(ignored)):
-            out.write(f"  - vulnerability: \\"{v}\\"\\n    reason: \\"Suppressed in Dependency-Track\\"\\n")
-        print(f"✅ Generated {output_file} with {len(set(ignored))} ignored CVEs.")
-    else:
-        print(f"ℹ️ No suppressed CVEs found for {output_file}.")
-'''
-
-                // 3. Dependency-Track API를 호출하여 백엔드/프론트엔드 VEX 규칙 적용
-                withCredentials([string(credentialsId: 'dependency-track-api-key', variable: 'DTRACK_API_KEY')]) {
-                    script {
-                        // 백엔드 VEX 조회 및 스캔
-                        sh """
-                            echo "🔍 [백엔드 이미지 VEX 확인 중]..."
-                            RESPONSE=\$(curl -s -X GET "${DTRACK_URL}/api/v1/project/lookup?name=${BACKEND_PROJECT_NAME}&version=${BACKEND_PROJECT_VERSION}" \
-                                 -H "X-Api-Key: ${DTRACK_API_KEY}" \
-                                 -H "Accept: application/json")
-                            
-                            BACKEND_UUID=""
-                            if command -v jq >/dev/null 2>&1; then
-                                BACKEND_UUID=\$(echo "\$RESPONSE" | jq -r '.uuid')
-                            else
-                                BACKEND_UUID=\$(echo "\$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin).get('uuid', ''))" 2>/dev/null)
-                            fi
-
-                            if [ -n "\$BACKEND_UUID" ] && [ "\$BACKEND_UUID" != "null" ]; then
-                                echo "✅ 백엔드 프로젝트 UUID 검색 성공: \$BACKEND_UUID"
-                                echo "📥 Dependency-Track으로부터 취약점 탐지 결과(Findings) 다운로드 중..."
-                                curl -s -X GET "${DTRACK_URL}/api/v1/finding/project/\$BACKEND_UUID" \
-                                     -H "X-Api-Key: ${DTRACK_API_KEY}" \
-                                     -H "Accept: application/json" \
-                                     -o backend-findings.json
-                                
-                                # 분리된 파이썬 스크립트 실행
-                                python3 parse_findings.py backend-findings.json backend-grype.yaml
-                                
-                                if [ -f backend-grype.yaml ]; then
-                                    echo "🛡️ 동적 필터 파일(backend-grype.yaml)을 적용하여 백엔드 이미지 취약점 스캔 실행..."
-                                    grype backend-image-sbom.json -c backend-grype.yaml --by-cve --fail-on high
-                                else
-                                    echo "⚠️ 필터 파일 생성 실패. 필터 없이 스캔합니다..."
-                                    grype backend-image-sbom.json --by-cve --fail-on high
-                                fi
-                            else
-                                echo "⚠️ Dependency-Track에 백엔드 프로젝트가 등록되지 않았습니다. 필터 없이 스캔합니다..."
-                                grype backend-image-sbom.json --by-cve --fail-on high
-                            fi
-                        """
-
-                        // 프론트엔드 VEX 조회 및 스캔
-                        sh """
-                            echo "🔍 [프론트엔드 이미지 VEX 확인 중]..."
-                            RESPONSE=\$(curl -s -X GET "${DTRACK_URL}/api/v1/project/lookup?name=${FRONTEND_PROJECT_NAME}&version=${FRONTEND_PROJECT_VERSION}" \
-                                 -H "X-Api-Key: ${DTRACK_API_KEY}" \
-                                 -H "Accept: application/json")
-                            
-                            FRONTEND_UUID=""
-                            if command -v jq >/dev/null 2>&1; then
-                                FRONTEND_UUID=\$(echo "\$RESPONSE" | jq -r '.uuid')
-                            else
-                                FRONTEND_UUID=\$(echo "\$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin).get('uuid', ''))" 2>/dev/null)
-                            fi
-
-                            if [ -n "\$FRONTEND_UUID" ] && [ "\$FRONTEND_UUID" != "null" ]; then
-                                echo "✅ 프론트엔드 프로젝트 UUID 검색 성공: \$FRONTEND_UUID"
-                                echo "📥 Dependency-Track으로부터 취약점 탐지 결과(Findings) 다운로드 중..."
-                                curl -s -X GET "${DTRACK_URL}/api/v1/finding/project/\$FRONTEND_UUID" \
-                                     -H "X-Api-Key: ${DTRACK_API_KEY}" \
-                                     -H "Accept: application/json" \
-                                     -o frontend-findings.json
-                                
-                                # 분리된 파이썬 스크립트 실행
-                                python3 parse_findings.py frontend-findings.json frontend-grype.yaml
-                                
-                                if [ -f frontend-grype.yaml ]; then
-                                    echo "🛡️ 동적 필터 파일(frontend-grype.yaml)을 적용하여 프론트엔드 이미지 취약점 스캔 실행..."
-                                    grype frontend-image-sbom.json -c frontend-grype.yaml --by-cve --fail-on high
-                                else
-                                    echo "⚠️ 필터 파일 생성 실패. 필터 없이 스캔합니다..."
-                                    grype frontend-image-sbom.json --by-cve --fail-on high
-                                fi
-                            else
-                                echo "⚠️ Dependency-Track에 프론트엔드 프로젝트가 등록되지 않았습니다. 필터 없이 스캔합니다..."
-                                grype frontend-image-sbom.json --by-cve --fail-on high
-                            fi
-                        """
-                    }
-                }
-                echo '✅ [바이너리 Docker 이미지 SBOM 스캔 성공] - 예외 처리 완료 및 통과'
-            }
-        }
-
-        stage('6. Docker Hub Push') {
-            steps {
-                echo '🚀 [스캔 통과 - Docker Hub로 이미지 푸시]...'
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-id', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh "echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin"
-                    sh "docker push ${DOCKER_HUB_ID}/backend-app:latest"
-                    sh "docker push ${DOCKER_HUB_ID}/frontend-app:latest"
-                }
-            }
-        }
-
-        stage('7. Dependency-Track SBOM Upload') {
-            steps {
-                echo '📤 [Dependency-Track으로 SBOM 전송]...'
+                // 2. Dependency-Track으로 SBOM 업로드
                 withCredentials([string(credentialsId: 'dependency-track-api-key', variable: 'DTRACK_API_KEY')]) {
                     script {
                         // 백엔드 이미지 SBOM 업로드
-                        // Dependency-Track API 규격에 맞추어 multipart/form-data 형식으로 전송합니다.
-                        // autoCreate=true로 지정 시 프로젝트가 없으면 자동으로 새로 만듭니다.
                         sh """
                             curl -X "POST" "${DTRACK_URL}/api/v1/bom" \
                                  -H "X-Api-Key: ${DTRACK_API_KEY}" \
@@ -230,6 +91,81 @@ with open(output_file, 'w') as out:
                                  -F "autoCreate=true" \
                                  -F "bom=@frontend-image-sbom.json"
                         """
+                    }
+                }
+                echo '✅ [Dependency-Track SBOM 전송 완료]'
+                
+                // 3. 디트랙 서버가 업로드된 SBOM의 분석을 마칠 때까지 15초간 대기합니다.
+                echo '⏳ [Dependency-Track 취약점 동기화 분석 대기 - 15초]...'
+                sh 'sleep 15'
+            }
+        }
+
+        stage('6. Binary SCA Scan (Docker Image SBOM)') {
+            steps {
+                echo '🔍 [바이너리 Docker 이미지 SBOM 스캔 시작 (VEX 병합 적용)]...'
+                withCredentials([string(credentialsId: 'dependency-track-api-key', variable: 'DTRACK_API_KEY')]) {
+                    script {
+                        // 백엔드 VEX 조회 및 스캔
+                        sh """
+                            echo "🔍 [백엔드 이미지 VEX 확인 중]..."
+                            RESPONSE=\$(curl -s -X GET "${DTRACK_URL}/api/v1/project/lookup?name=${BACKEND_PROJECT_NAME}&version=${BACKEND_PROJECT_VERSION}" \
+                                 -H "X-Api-Key: ${DTRACK_API_KEY}" \
+                                 -H "Accept: application/json")
+                            BACKEND_UUID=\$(echo "\$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin).get('uuid', ''))" 2>/dev/null)
+                            
+                            if [ -n "\$BACKEND_UUID" ] && [ "\$BACKEND_UUID" != "null" ]; then
+                                curl -s -X GET "${DTRACK_URL}/api/v1/vex/project/\$BACKEND_UUID" \
+                                     -H "X-Api-Key: ${DTRACK_API_KEY}" \
+                                     -H "Accept: application/json" \
+                                     -o backend-vex-downloaded.json
+                                python3 merge_vex.py backend-vex-downloaded.json backend-local-vex.json backend-vex.json backend-grype.yaml
+                                if [ -f backend-grype.yaml ]; then
+                                    grype backend-image-sbom.json -c backend-grype.yaml --by-cve --fail-on high
+                                else
+                                    grype backend-image-sbom.json --by-cve --fail-on high
+                                fi
+                            fi
+                        """
+
+                        // 프론트엔드 VEX 조회 및 스캔
+                        sh """
+                            echo "🔍 [프론트엔드 이미지 VEX 확인 중]..."
+                            RESPONSE=\$(curl -s -X GET "${DTRACK_URL}/api/v1/project/lookup?name=${FRONTEND_PROJECT_NAME}&version=${FRONTEND_PROJECT_VERSION}" \
+                                 -H "X-Api-Key: ${DTRACK_API_KEY}" \
+                                 -H "Accept: application/json")
+                            FRONTEND_UUID=\$(echo "\$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin).get('uuid', ''))" 2>/dev/null)
+                            
+                            if [ -n "\$FRONTEND_UUID" ] && [ "\$FRONTEND_UUID" != "null" ]; then
+                                curl -s -X GET "${DTRACK_URL}/api/v1/vex/project/\$FRONTEND_UUID" \
+                                     -H "X-Api-Key: ${DTRACK_API_KEY}" \
+                                     -H "Accept: application/json" \
+                                     -o frontend-vex-downloaded.json
+                                python3 merge_vex.py frontend-vex-downloaded.json frontend-local-vex.json frontend-vex.json frontend-grype.yaml
+                                if [ -f frontend-grype.yaml ]; then
+                                    grype frontend-image-sbom.json -c frontend-grype.yaml --by-cve --fail-on high
+                                else
+                                    grype frontend-image-sbom.json --by-cve --fail-on high
+                                fi
+                            fi
+                        """
+                    }
+                }
+                echo '✅ [바이너리 Docker 이미지 SBOM 스캔 성공] - 예외 처리 완료 및 통과'
+            }
+        }
+
+        stage('7. Docker Hub Push') {
+            steps {
+                echo '🚀 [스캔 통과 - Docker Hub로 이미지 푸시]...'
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-id', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh "echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin"
+                    sh "docker push ${DOCKER_HUB_ID}/backend-app:latest"
+                    sh "docker push ${DOCKER_HUB_ID}/frontend-app:latest"
+                }
+            }
+        }
+
                     }
                 }
                 echo '✅ [Dependency-Track SBOM 전송 완료]'
