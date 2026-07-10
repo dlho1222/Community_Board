@@ -95,21 +95,38 @@ pipeline {
                                      -H "Accept: application/json" \
                                      -o backend-findings.json
                                 
-                                # Pure Shell(sed, grep, cut)을 사용하여 Findings 내역 파싱 및 backend-grype.yaml 동적 생성
-                                cat backend-findings.json | sed 's/},{"/\\n/g' | grep -E '"isSuppressed"[[:space:]]*:[[:space:]]*true|"state"[[:space:]]*:[[:space:]]*"(NOT_AFFECTED|FALSE_POSITIVE|RESOLVED|WONT_FIX)"' | grep -o '"vulnId"[[:space:]]*:[[:space:]]*"[^"]*' | cut -d'"' -f4 > backend-ignored-cves.txt || true
-                                
-                                echo "ignore:" > backend-grype.yaml
-                                if [ -s backend-ignored-cves.txt ]; then
-                                    while read -r cve; do
-                                        if [ -n "\$cve" ]; then
-                                            echo "  - vulnerability: \"\$cve\"" >> backend-grype.yaml
-                                            echo "    reason: \"Suppressed in Dependency-Track\"" >> backend-grype.yaml
-                                        fi
-                                    done < backend-ignored-cves.txt
-                                    echo "✅ Generated backend-grype.yaml with \$(wc -l < backend-ignored-cves.txt) ignored CVEs."
-                                else
-                                    echo "ℹ️ No suppressed CVEs found in Dependency-Track."
-                                fi
+                                # 파이썬 명령어로 Findings(디트랙 예외조치)를 파싱하여 backend-grype.yaml 필터 작성
+                                python3 -c "
+import json, os
+if os.path.exists('backend-findings.json'):
+    try:
+        with open('backend-findings.json', 'r') as f:
+            data = json.load(f)
+    except Exception as e:
+        print('JSON parsing error:', e)
+        data = []
+else:
+    data = []
+
+ignored = []
+for item in data:
+    analysis = item.get('analysis', {})
+    vuln = item.get('vulnerability', {})
+    vuln_id = vuln.get('vulnId')
+    # Suppressed 이거나 VEX 상태가 NOT_AFFECTED/FALSE_POSITIVE 인 경우 예외처리 목록에 추가
+    if analysis.get('isSuppressed') == True or analysis.get('state') in ['NOT_AFFECTED', 'FALSE_POSITIVE', 'RESOLVED', 'WONT_FIX']:
+        if vuln_id:
+            ignored.append(vuln_id)
+
+with open('backend-grype.yaml', 'w') as out:
+    out.write('ignore:\\n')
+    if ignored:
+        for v in sorted(set(ignored)):
+            out.write(f'  - vulnerability: \"{v}\"\\n    reason: \"Suppressed in Dependency-Track\"\\n')
+        print(f'✅ Generated backend-grype.yaml with {len(set(ignored))} ignored CVEs.')
+    else:
+        print('ℹ️ No suppressed CVEs found in Dependency-Track.')
+" 2>/dev/null || true
                                 
                                 if [ -f backend-grype.yaml ]; then
                                     echo "🛡️ 동적 필터 파일(backend-grype.yaml)을 적용하여 백엔드 이미지 취약점 스캔 실행..."
@@ -148,21 +165,36 @@ pipeline {
                                      -H "Accept: application/json" \
                                      -o frontend-findings.json
                                 
-                                # Pure Shell(sed, grep, cut)을 사용하여 Findings 내역 파싱 및 frontend-grype.yaml 동적 생성
-                                cat frontend-findings.json | sed 's/},{"/\\n/g' | grep -E '"isSuppressed"[[:space:]]*:[[:space:]]*true|"state"[[:space:]]*:[[:space:]]*"(NOT_AFFECTED|FALSE_POSITIVE|RESOLVED|WONT_FIX)"' | grep -o '"vulnId"[[:space:]]*:[[:space:]]*"[^"]*' | cut -d'"' -f4 > frontend-ignored-cves.txt || true
-                                
-                                echo "ignore:" > frontend-grype.yaml
-                                if [ -s frontend-ignored-cves.txt ]; then
-                                    while read -r cve; do
-                                        if [ -n "\$cve" ]; then
-                                            echo "  - vulnerability: \"\$cve\"" >> frontend-grype.yaml
-                                            echo "    reason: \"Suppressed in Dependency-Track\"" >> frontend-grype.yaml
-                                        fi
-                                    done < frontend-ignored-cves.txt
-                                    echo "✅ Generated frontend-grype.yaml with \$(wc -l < frontend-ignored-cves.txt) ignored CVEs."
-                                else
-                                    echo "ℹ️ No suppressed CVEs found in Dependency-Track."
-                                fi
+                                python3 -c "
+import json, os
+if os.path.exists('frontend-findings.json'):
+    try:
+        with open('frontend-findings.json', 'r') as f:
+            data = json.load(f)
+    except Exception as e:
+        print('JSON parsing error:', e)
+        data = []
+else:
+    data = []
+
+ignored = []
+for item in data:
+    analysis = item.get('analysis', {})
+    vuln = item.get('vulnerability', {})
+    vuln_id = vuln.get('vulnId')
+    if analysis.get('isSuppressed') == True or analysis.get('state') in ['NOT_AFFECTED', 'FALSE_POSITIVE', 'RESOLVED', 'WONT_FIX']:
+        if vuln_id:
+            ignored.append(vuln_id)
+
+with open('frontend-grype.yaml', 'w') as out:
+    out.write('ignore:\\n')
+    if ignored:
+        for v in sorted(set(ignored)):
+            out.write(f'  - vulnerability: \"{v}\"\\n    reason: \"Suppressed in Dependency-Track\"\\n')
+        print(f'✅ Generated frontend-grype.yaml with {len(set(ignored))} ignored CVEs.')
+    else:
+        print('ℹ️ No suppressed CVEs found in Dependency-Track.')
+" 2>/dev/null || true
                                 
                                 if [ -f frontend-grype.yaml ]; then
                                     echo "🛡️ 동적 필터 파일(frontend-grype.yaml)을 적용하여 프론트엔드 이미지 취약점 스캔 실행..."
