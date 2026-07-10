@@ -89,17 +89,55 @@ pipeline {
 
                             if [ -n "\$BACKEND_UUID" ] && [ "\$BACKEND_UUID" != "null" ]; then
                                 echo "✅ 백엔드 프로젝트 UUID 검색 성공: \$BACKEND_UUID"
-                                echo "📥 Dependency-Track으로부터 VEX 문서 다운로드 중..."
-                                curl -s -X GET "${DTRACK_URL}/api/v1/vex/project/\$BACKEND_UUID" \
+                                echo "📥 Dependency-Track으로부터 취약점 탐지 결과(Findings) 다운로드 중..."
+                                curl -s -X GET "${DTRACK_URL}/api/v1/finding/project/\$BACKEND_UUID" \
                                      -H "X-Api-Key: ${DTRACK_API_KEY}" \
                                      -H "Accept: application/json" \
-                                     -o backend-vex.json
+                                     -o backend-findings.json
                                 
-                                if [ -f backend-vex.json ] && [ \$(stat -c%s backend-vex.json) -gt 10 ]; then
-                                    echo "🛡️ VEX 필터를 적용하여 백엔드 이미지 취약점 스캔 실행..."
-                                    grype backend-image-sbom.json --vex backend-vex.json --by-cve --fail-on high
+                                # 파이썬 명령어로 Findings(디트랙 예외조치)를 파싱하여 backend-grype.yaml 필터 작성
+                                PYTHON_CMD="python3"
+                                if ! command -v python3 >/dev/null 2>&1; then
+                                    PYTHON_CMD="python"
+                                fi
+
+                                \$PYTHON_CMD -c "
+import json, os
+if os.path.exists('backend-findings.json'):
+    try:
+        with open('backend-findings.json', 'r') as f:
+            data = json.load(f)
+    except Exception as e:
+        print('JSON parsing error:', e)
+        data = []
+else:
+    data = []
+
+ignored = []
+for item in data:
+    analysis = item.get('analysis', {})
+    vuln = item.get('vulnerability', {})
+    vuln_id = vuln.get('vulnId')
+    # Suppressed 이거나 VEX 상태가 NOT_AFFECTED/FALSE_POSITIVE 인 경우 예외처리 목록에 추가
+    if analysis.get('isSuppressed') == True or analysis.get('state') in ['NOT_AFFECTED', 'FALSE_POSITIVE', 'RESOLVED', 'WONT_FIX']:
+        if vuln_id:
+            ignored.append(vuln_id)
+
+with open('backend-grype.yaml', 'w') as out:
+    out.write('ignore:\\n')
+    if ignored:
+        for v in sorted(set(ignored)):
+            out.write(f'  - vulnerability: \"{v}\"\\n    reason: \"Suppressed in Dependency-Track\"\\n')
+        print(f'✅ Generated backend-grype.yaml with {len(set(ignored))} ignored CVEs.')
+    else:
+        print('ℹ️ No suppressed CVEs found in Dependency-Track.')
+" 2>/dev/null || true
+                                
+                                if [ -f backend-grype.yaml ]; then
+                                    echo "🛡️ 동적 필터 파일(backend-grype.yaml)을 적용하여 백엔드 이미지 취약점 스캔 실행..."
+                                    grype backend-image-sbom.json -c backend-grype.yaml --by-cve --fail-on high
                                 else
-                                    echo "⚠️ VEX 문서가 비어 있거나 손상되었습니다. 필터 없이 스캔합니다..."
+                                    echo "⚠️ 필터 파일 생성 실패. 필터 없이 스캔합니다..."
                                     grype backend-image-sbom.json --by-cve --fail-on high
                                 fi
                             else
@@ -126,17 +164,53 @@ pipeline {
 
                             if [ -n "\$FRONTEND_UUID" ] && [ "\$FRONTEND_UUID" != "null" ]; then
                                 echo "✅ 프론트엔드 프로젝트 UUID 검색 성공: \$FRONTEND_UUID"
-                                echo "📥 Dependency-Track으로부터 VEX 문서 다운로드 중..."
-                                curl -s -X GET "${DTRACK_URL}/api/v1/vex/project/\$FRONTEND_UUID" \
+                                echo "📥 Dependency-Track으로부터 취약점 탐지 결과(Findings) 다운로드 중..."
+                                curl -s -X GET "${DTRACK_URL}/api/v1/finding/project/\$FRONTEND_UUID" \
                                      -H "X-Api-Key: ${DTRACK_API_KEY}" \
                                      -H "Accept: application/json" \
-                                     -o frontend-vex.json
+                                     -o frontend-findings.json
                                 
-                                if [ -f frontend-vex.json ] && [ \$(stat -c%s frontend-vex.json) -gt 10 ]; then
-                                    echo "🛡️ VEX 필터를 적용하여 프론트엔드 이미지 취약점 스캔 실행..."
-                                    grype frontend-image-sbom.json --vex frontend-vex.json --by-cve --fail-on high
+                                PYTHON_CMD="python3"
+                                if ! command -v python3 >/dev/null 2>&1; then
+                                    PYTHON_CMD="python"
+                                fi
+
+                                \$PYTHON_CMD -c "
+import json, os
+if os.path.exists('frontend-findings.json'):
+    try:
+        with open('frontend-findings.json', 'r') as f:
+            data = json.load(f)
+    except Exception as e:
+        print('JSON parsing error:', e)
+        data = []
+else:
+    data = []
+
+ignored = []
+for item in data:
+    analysis = item.get('analysis', {})
+    vuln = item.get('vulnerability', {})
+    vuln_id = vuln.get('vulnId')
+    if analysis.get('isSuppressed') == True or analysis.get('state') in ['NOT_AFFECTED', 'FALSE_POSITIVE', 'RESOLVED', 'WONT_FIX']:
+        if vuln_id:
+            ignored.append(vuln_id)
+
+with open('frontend-grype.yaml', 'w') as out:
+    out.write('ignore:\\n')
+    if ignored:
+        for v in sorted(set(ignored)):
+            out.write(f'  - vulnerability: \"{v}\"\\n    reason: \"Suppressed in Dependency-Track\"\\n')
+        print(f'✅ Generated frontend-grype.yaml with {len(set(ignored))} ignored CVEs.')
+    else:
+        print('ℹ️ No suppressed CVEs found in Dependency-Track.')
+" 2>/dev/null || true
+                                
+                                if [ -f frontend-grype.yaml ]; then
+                                    echo "🛡️ 동적 필터 파일(frontend-grype.yaml)을 적용하여 프론트엔드 이미지 취약점 스캔 실행..."
+                                    grype frontend-image-sbom.json -c frontend-grype.yaml --by-cve --fail-on high
                                 else
-                                    echo "⚠️ VEX 문서가 비어 있거나 손상되었습니다. 필터 없이 스캔합니다..."
+                                    echo "⚠️ 필터 파일 생성 실패. 필터 없이 스캔합니다..."
                                     grype frontend-image-sbom.json --by-cve --fail-on high
                                 fi
                             else
