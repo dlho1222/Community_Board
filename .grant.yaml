@@ -29,3 +29,8 @@ allow:
   - "CDDL-1.0"
   - "CDDL-1.1"
   - "Public Domain"
+  - "LGPL-2.1-only"
+  - "LGPL-2.1-or-later"
+  - "GPL-2.0-with-classpath-exception"
+  - "GNU Lesser General Public License"
+  - "The GNU General Public License, v2 with Universal FOSS Exception, v1.0"
