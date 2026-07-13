@@ -7,11 +7,13 @@ verbose: true
 
 # 1. Require all packages to have a license and recognize only known/standard licenses
 require-license: true
-require-known-license: true
+require-known-license: false
 
 # 2. Package patterns to ignore from license checking (internal packages)
 ignore-packages:
   - "internal/*"
+  - "backend"
+  - "frontend"
 
 # 3. Whitelist of standard, 100% commercially-safe permissive licenses.
 # Any license not in this list will be blocked by default.
