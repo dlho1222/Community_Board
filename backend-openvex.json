@@ -7,7 +7,9 @@
   "role": "development",
   "statements": [
     {
-      "vulnerability": "CVE-2025-55752",
+      "vulnerability": {
+        "name": "CVE-2025-55752"
+      },
       "status": "not_affected",
       "justification": "component_not_present",
       "statement": "Vulnerable feature is not used by the application.",
@@ -18,7 +20,9 @@
       ]
     },
     {
-      "vulnerability": "CVE-2025-48988",
+      "vulnerability": {
+        "name": "CVE-2025-48988"
+      },
       "status": "not_affected",
       "justification": "component_not_present",
       "statement": "Vulnerable feature is not used by the application.",
@@ -29,7 +33,9 @@
       ]
     },
     {
-      "vulnerability": "CVE-2025-48989",
+      "vulnerability": {
+        "name": "CVE-2025-48989"
+      },
       "status": "not_affected",
       "justification": "component_not_present",
       "statement": "Vulnerable feature is not used by the application.",
@@ -40,7 +46,9 @@
       ]
     },
     {
-      "vulnerability": "CVE-2025-52520",
+      "vulnerability": {
+        "name": "CVE-2025-52520"
+      },
       "status": "not_affected",
       "justification": "component_not_present",
       "statement": "Vulnerable feature is not used by the application.",
@@ -51,7 +59,9 @@
       ]
     },
     {
-      "vulnerability": "CVE-2025-53506",
+      "vulnerability": {
+        "name": "CVE-2025-53506"
+      },
       "status": "not_affected",
       "justification": "component_not_present",
       "statement": "Vulnerable feature is not used by the application.",
@@ -62,7 +72,9 @@
       ]
     },
     {
-      "vulnerability": "CVE-2026-41284",
+      "vulnerability": {
+        "name": "CVE-2026-41284"
+      },
       "status": "not_affected",
       "justification": "component_not_present",
       "statement": "Vulnerable feature is not used by the application.",
@@ -73,7 +85,9 @@
       ]
     },
     {
-      "vulnerability": "CVE-2026-42498",
+      "vulnerability": {
+        "name": "CVE-2026-42498"
+      },
       "status": "not_affected",
       "justification": "component_not_present",
       "statement": "Vulnerable feature is not used by the application.",
@@ -84,7 +98,9 @@
       ]
     },
     {
-      "vulnerability": "CVE-2026-43513",
+      "vulnerability": {
+        "name": "CVE-2026-43513"
+      },
       "status": "not_affected",
       "justification": "component_not_present",
       "statement": "Vulnerable feature is not used by the application.",
@@ -95,7 +111,9 @@
       ]
     },
     {
-      "vulnerability": "CVE-2026-24734",
+      "vulnerability": {
+        "name": "CVE-2026-24734"
+      },
       "status": "not_affected",
       "justification": "component_not_present",
       "statement": "Vulnerable feature is not used by the application.",
@@ -106,7 +124,9 @@
       ]
     },
     {
-      "vulnerability": "CVE-2026-34483",
+      "vulnerability": {
+        "name": "CVE-2026-34483"
+      },
       "status": "not_affected",
       "justification": "component_not_present",
       "statement": "Vulnerable feature is not used by the application.",
@@ -117,7 +137,9 @@
       ]
     },
     {
-      "vulnerability": "CVE-2026-24880",
+      "vulnerability": {
+        "name": "CVE-2026-24880"
+      },
       "status": "not_affected",
       "justification": "component_not_present",
       "statement": "Vulnerable feature is not used by the application.",
@@ -128,7 +150,9 @@
       ]
     },
     {
-      "vulnerability": "CVE-2025-30749",
+      "vulnerability": {
+        "name": "CVE-2025-30749"
+      },
       "status": "not_affected",
       "justification": "component_not_present",
       "statement": "Vulnerable openjdk function is not called.",
@@ -139,7 +163,9 @@
       ]
     },
     {
-      "vulnerability": "CVE-2026-21945",
+      "vulnerability": {
+        "name": "CVE-2026-21945"
+      },
       "status": "not_affected",
       "justification": "component_not_present",
       "statement": "Vulnerable openjdk function is not called.",
@@ -150,7 +176,9 @@
       ]
     },
     {
-      "vulnerability": "CVE-2026-22016",
+      "vulnerability": {
+        "name": "CVE-2026-22016"
+      },
       "status": "not_affected",
       "justification": "component_not_present",
       "statement": "Vulnerable openjdk function is not called.",
@@ -161,7 +189,9 @@
       ]
     },
     {
-      "vulnerability": "CVE-2026-34282",
+      "vulnerability": {
+        "name": "CVE-2026-34282"
+      },
       "status": "not_affected",
       "justification": "component_not_present",
       "statement": "Vulnerable openjdk function is not called.",
@@ -172,7 +202,9 @@
       ]
     },
     {
-      "vulnerability": "CVE-2025-53066",
+      "vulnerability": {
+        "name": "CVE-2025-53066"
+      },
       "status": "not_affected",
       "justification": "component_not_present",
       "statement": "Vulnerable openjdk function is not called.",
@@ -183,7 +215,9 @@
       ]
     },
     {
-      "vulnerability": "CVE-2025-50059",
+      "vulnerability": {
+        "name": "CVE-2025-50059"
+      },
       "status": "not_affected",
       "justification": "component_not_present",
       "statement": "Vulnerable openjdk function is not called.",
@@ -194,7 +228,9 @@
       ]
     },
     {
-      "vulnerability": "CVE-2025-41249",
+      "vulnerability": {
+        "name": "CVE-2025-41249"
+      },
       "status": "not_affected",
       "justification": "component_not_present",
       "statement": "Vulnerable spring-core feature is not utilized.",
@@ -205,7 +241,9 @@
       ]
     },
     {
-      "vulnerability": "CVE-2026-54513",
+      "vulnerability": {
+        "name": "CVE-2026-54513"
+      },
       "status": "not_affected",
       "justification": "component_not_present",
       "statement": "Jackson vulnerability is not exploitable in our configuration.",
@@ -216,7 +254,9 @@
       ]
     },
     {
-      "vulnerability": "CVE-2026-54512",
+      "vulnerability": {
+        "name": "CVE-2026-54512"
+      },
       "status": "not_affected",
       "justification": "component_not_present",
       "statement": "Jackson vulnerability is not exploitable in our configuration.",
@@ -227,7 +267,9 @@
       ]
     },
     {
-      "vulnerability": "CVE-2026-45447",
+      "vulnerability": {
+        "name": "CVE-2026-45447"
+      },
       "status": "not_affected",
       "justification": "vulnerable_code_not_in_execute_path",
       "statement": "OS level openssl/libssl components are not exposed to untrusted inputs.",
