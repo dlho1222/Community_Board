@@ -10,127 +10,235 @@
       "vulnerability": "CVE-2025-55752",
       "status": "not_affected",
       "justification": "component_not_present",
-      "statement": "Vulnerable feature is not used by the application."
+      "statement": "Vulnerable feature is not used by the application.",
+      "products": [
+        {
+          "@id": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@10.1.40"
+        }
+      ]
     },
     {
       "vulnerability": "CVE-2025-48988",
       "status": "not_affected",
       "justification": "component_not_present",
-      "statement": "Vulnerable feature is not used by the application."
+      "statement": "Vulnerable feature is not used by the application.",
+      "products": [
+        {
+          "@id": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@10.1.40"
+        }
+      ]
     },
     {
       "vulnerability": "CVE-2025-48989",
       "status": "not_affected",
       "justification": "component_not_present",
-      "statement": "Vulnerable feature is not used by the application."
+      "statement": "Vulnerable feature is not used by the application.",
+      "products": [
+        {
+          "@id": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@10.1.40"
+        }
+      ]
     },
     {
       "vulnerability": "CVE-2025-52520",
       "status": "not_affected",
       "justification": "component_not_present",
-      "statement": "Vulnerable feature is not used by the application."
+      "statement": "Vulnerable feature is not used by the application.",
+      "products": [
+        {
+          "@id": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@10.1.40"
+        }
+      ]
     },
     {
       "vulnerability": "CVE-2025-53506",
       "status": "not_affected",
       "justification": "component_not_present",
-      "statement": "Vulnerable feature is not used by the application."
+      "statement": "Vulnerable feature is not used by the application.",
+      "products": [
+        {
+          "@id": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@10.1.40"
+        }
+      ]
     },
     {
       "vulnerability": "CVE-2026-41284",
       "status": "not_affected",
       "justification": "component_not_present",
-      "statement": "Vulnerable feature is not used by the application."
+      "statement": "Vulnerable feature is not used by the application.",
+      "products": [
+        {
+          "@id": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@10.1.40"
+        }
+      ]
     },
     {
       "vulnerability": "CVE-2026-42498",
       "status": "not_affected",
       "justification": "component_not_present",
-      "statement": "Vulnerable feature is not used by the application."
+      "statement": "Vulnerable feature is not used by the application.",
+      "products": [
+        {
+          "@id": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@10.1.40"
+        }
+      ]
     },
     {
       "vulnerability": "CVE-2026-43513",
       "status": "not_affected",
       "justification": "component_not_present",
-      "statement": "Vulnerable feature is not used by the application."
+      "statement": "Vulnerable feature is not used by the application.",
+      "products": [
+        {
+          "@id": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@10.1.40"
+        }
+      ]
     },
     {
       "vulnerability": "CVE-2026-24734",
       "status": "not_affected",
       "justification": "component_not_present",
-      "statement": "Vulnerable feature is not used by the application."
+      "statement": "Vulnerable feature is not used by the application.",
+      "products": [
+        {
+          "@id": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@10.1.40"
+        }
+      ]
     },
     {
       "vulnerability": "CVE-2026-34483",
       "status": "not_affected",
       "justification": "component_not_present",
-      "statement": "Vulnerable feature is not used by the application."
+      "statement": "Vulnerable feature is not used by the application.",
+      "products": [
+        {
+          "@id": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@10.1.40"
+        }
+      ]
     },
     {
       "vulnerability": "CVE-2026-24880",
       "status": "not_affected",
       "justification": "component_not_present",
-      "statement": "Vulnerable feature is not used by the application."
+      "statement": "Vulnerable feature is not used by the application.",
+      "products": [
+        {
+          "@id": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@10.1.40"
+        }
+      ]
     },
     {
       "vulnerability": "CVE-2025-30749",
       "status": "not_affected",
       "justification": "component_not_present",
-      "statement": "Vulnerable openjdk function is not called."
+      "statement": "Vulnerable openjdk function is not called.",
+      "products": [
+        {
+          "@id": "pkg:generic/oracle/openjdk@17.0.15%2B6?repository_url=https%3A%2F%2Fgithub.com%2Fadoptium%2Fjdk17u.git"
+        }
+      ]
     },
     {
       "vulnerability": "CVE-2026-21945",
       "status": "not_affected",
       "justification": "component_not_present",
-      "statement": "Vulnerable openjdk function is not called."
+      "statement": "Vulnerable openjdk function is not called.",
+      "products": [
+        {
+          "@id": "pkg:generic/oracle/openjdk@17.0.15%2B6?repository_url=https%3A%2F%2Fgithub.com%2Fadoptium%2Fjdk17u.git"
+        }
+      ]
     },
     {
       "vulnerability": "CVE-2026-22016",
       "status": "not_affected",
       "justification": "component_not_present",
-      "statement": "Vulnerable openjdk function is not called."
+      "statement": "Vulnerable openjdk function is not called.",
+      "products": [
+        {
+          "@id": "pkg:generic/oracle/openjdk@17.0.15%2B6?repository_url=https%3A%2F%2Fgithub.com%2Fadoptium%2Fjdk17u.git"
+        }
+      ]
     },
     {
       "vulnerability": "CVE-2026-34282",
       "status": "not_affected",
       "justification": "component_not_present",
-      "statement": "Vulnerable openjdk function is not called."
+      "statement": "Vulnerable openjdk function is not called.",
+      "products": [
+        {
+          "@id": "pkg:generic/oracle/openjdk@17.0.15%2B6?repository_url=https%3A%2F%2Fgithub.com%2Fadoptium%2Fjdk17u.git"
+        }
+      ]
     },
     {
       "vulnerability": "CVE-2025-53066",
       "status": "not_affected",
       "justification": "component_not_present",
-      "statement": "Vulnerable openjdk function is not called."
+      "statement": "Vulnerable openjdk function is not called.",
+      "products": [
+        {
+          "@id": "pkg:generic/oracle/openjdk@17.0.15%2B6?repository_url=https%3A%2F%2Fgithub.com%2Fadoptium%2Fjdk17u.git"
+        }
+      ]
     },
     {
       "vulnerability": "CVE-2025-50059",
       "status": "not_affected",
       "justification": "component_not_present",
-      "statement": "Vulnerable openjdk function is not called."
+      "statement": "Vulnerable openjdk function is not called.",
+      "products": [
+        {
+          "@id": "pkg:generic/oracle/openjdk@17.0.15%2B6?repository_url=https%3A%2F%2Fgithub.com%2Fadoptium%2Fjdk17u.git"
+        }
+      ]
     },
     {
       "vulnerability": "CVE-2025-41249",
       "status": "not_affected",
       "justification": "component_not_present",
-      "statement": "Vulnerable spring-core feature is not utilized."
+      "statement": "Vulnerable spring-core feature is not utilized.",
+      "products": [
+        {
+          "@id": "pkg:maven/org.springframework/spring-core@6.1.19"
+        }
+      ]
     },
     {
       "vulnerability": "CVE-2026-54513",
       "status": "not_affected",
       "justification": "component_not_present",
-      "statement": "Jackson vulnerability is not exploitable in our configuration."
+      "statement": "Jackson vulnerability is not exploitable in our configuration.",
+      "products": [
+        {
+          "@id": "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.17.3"
+        }
+      ]
     },
     {
       "vulnerability": "CVE-2026-54512",
       "status": "not_affected",
       "justification": "component_not_present",
-      "statement": "Jackson vulnerability is not exploitable in our configuration."
+      "statement": "Jackson vulnerability is not exploitable in our configuration.",
+      "products": [
+        {
+          "@id": "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.17.3"
+        }
+      ]
     },
     {
       "vulnerability": "CVE-2026-45447",
       "status": "not_affected",
       "justification": "vulnerable_code_not_in_execute_path",
-      "statement": "OS level openssl/libssl components are not exposed to untrusted inputs."
+      "statement": "OS level openssl/libssl components are not exposed to untrusted inputs.",
+      "products": [
+        {
+          "@id": "pkg:deb/ubuntu/openssl@1.1.1f-1ubuntu2.24?arch=amd64&distro=ubuntu-20.04"
+        },
+        {
+          "@id": "pkg:deb/ubuntu/libssl1.1@1.1.1f-1ubuntu2.24?arch=amd64&distro=ubuntu-20.04&upstream=openssl"
+        }
+      ]
     }
   ]
 }
