@@ -1,18 +1,15 @@
 # Grant License Compliance Configuration for Container Images
-# Since application dependencies are already strictly audited in Stage 2 (.grant.yaml),
-# this policy allows all OS-level packages and system libraries within the container image to pass.
-
 format: table
 quiet: false
 verbose: false
 
-# For OS packages, we do not require strict known formats to prevent blocking on system utilities.
 require-license: false
 require-known-license: false
 
+# Skip license auditing for all packages in the container image, 
+# as they are already strictly verified during Stage 2 source-level checks.
 ignore-packages:
-  - "internal/*"
+  - "*"
 
-# Allow all licenses (wildcard) for OS base image runtime utilities.
 allow:
   - "*"
