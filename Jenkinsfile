@@ -62,9 +62,6 @@ pipeline {
                 }
                 sh 'cp backend/build/reports/application.cdx.json backend-build-sbom.json'
                 
-                dir('frontend') {
-                    sh 'npm install'
-                }
                 sh 'syft dir:./frontend -o cyclonedx-json@1.6=frontend-build-sbom.json'
                 
                 // 2. Grype 보안 취약점 스캔 (OpenVEX 필터 적용, High/Critical만 필터링하여 차단 로그 저장)
