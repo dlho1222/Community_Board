@@ -61,8 +61,8 @@ pipeline {
                 sh 'syft dir:./frontend -o cyclonedx-json@1.6=frontend-build-sbom.json'
                 
                 // 2. Grype 보안 취약점 스캔 (OpenVEX 필터 적용 및 차단 로그 저장)
-                sh 'export PATH="/var/jenkins_home/bin:$PATH" && grype backend-build-sbom.json --vex backend-openvex.json --by-cve --fail-on high > backend-source-cve-blocked.txt'
-                sh 'export PATH="/var/jenkins_home/bin:$PATH" && grype frontend-build-sbom.json --vex frontend-openvex.json --by-cve --fail-on high > frontend-source-cve-blocked.txt'
+                sh 'export PATH="/var/jenkins_home/bin:$PATH" && grype backend-build-sbom.json --vex backend-openvex.json --by-cve --min-severity high --fail-on high > backend-source-cve-blocked.txt'
+                sh 'export PATH="/var/jenkins_home/bin:$PATH" && grype frontend-build-sbom.json --vex frontend-openvex.json --by-cve --min-severity high --fail-on high > frontend-source-cve-blocked.txt'
                 
                 // 3. Grant 라이선스 컴플라이언스 스캔 (위반 로그 저장)
                 sh 'export PATH="/var/jenkins_home/bin:$PATH" && grant check backend-build-sbom.json -c .grant.yaml > backend-source-license-blocked.txt'
@@ -98,8 +98,8 @@ pipeline {
                 sh "syft ${DOCKER_HUB_ID}/frontend-app:latest -o cyclonedx-json@1.6=frontend-image-sbom.json"
                 
                 // 2. Grype 보안 취약점 스캔 (OpenVEX 필터 적용 및 차단 로그 저장)
-                sh 'export PATH="/var/jenkins_home/bin:$PATH" && grype backend-image-sbom.json --vex backend-openvex.json --by-cve --fail-on high > backend-image-cve-blocked.txt'
-                sh 'export PATH="/var/jenkins_home/bin:$PATH" && grype frontend-image-sbom.json --vex frontend-openvex.json --by-cve --fail-on high > frontend-image-cve-blocked.txt'
+                sh 'export PATH="/var/jenkins_home/bin:$PATH" && grype backend-image-sbom.json --vex backend-openvex.json --by-cve --min-severity high --fail-on high > backend-image-cve-blocked.txt'
+                sh 'export PATH="/var/jenkins_home/bin:$PATH" && grype frontend-image-sbom.json --vex frontend-openvex.json --by-cve --min-severity high --fail-on high > frontend-image-cve-blocked.txt'
                 
                 // 3. Grant 라이선스 컴플라이언스 스캔 (위반 로그 저장)
                 sh 'export PATH="/var/jenkins_home/bin:$PATH" && grant check backend-image-sbom.json -c .grant.yaml > backend-image-license-blocked.txt'
