@@ -1,25 +1,31 @@
 # Grant License Compliance Configuration
-# This policy enforces license compliance at build time.
+# This policy enforces license compliance at build time using a strict whitelist.
 
 format: table
 quiet: false
 verbose: false
 
-# 1. Require all packages to have a license (Block unspecified licenses)
+# 1. Require all packages to have a license and recognize only known/standard licenses
 require-license: true
-require-known-license: false
+require-known-license: true
 
 # 2. Package patterns to ignore from license checking (internal packages)
 ignore-packages:
   - "internal/*"
 
-# 3. Explicitly deny GPL/AGPL (Copyleft) licenses to prevent source code disclosure obligations
-rules:
-  - name: "deny-gpl"
-    pattern: "*gpl*"
-    mode: "deny"
-    reason: "GPL licenses require source code disclosure and are forbidden for commercial distribution."
-  - name: "deny-agpl"
-    pattern: "*agpl*"
-    mode: "deny"
-    reason: "AGPL licenses require source code disclosure and are forbidden for commercial distribution."
+# 3. Whitelist of standard, 100% commercially-safe permissive licenses.
+# Any license not in this list will be blocked by default.
+allow:
+  - "MIT"
+  - "Apache-2.0"
+  - "BSD-2-Clause"
+  - "BSD-3-Clause"
+  - "ISC"
+  - "Unlicense"
+  - "CC0-1.0"
+  - "EPL-1.0"
+  - "EPL-2.0"
+  - "MPL-2.0"
+  - "CDDL-1.0"
+  - "CDDL-1.1"
+  - "Public Domain"
