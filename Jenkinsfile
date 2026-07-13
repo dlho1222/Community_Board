@@ -58,7 +58,7 @@ pipeline {
                 // 1. 소스 디렉토리로부터 정밀한 SBOM 추출 (백엔드는 Gradle 실행, 프론트엔드는 npm install 후 스캔)
                 dir('backend') {
                     sh 'chmod +x ./gradlew'
-                    sh './gradlew cyclonedxBom'
+                    sh './gradlew clean cyclonedxBom'
                 }
                 sh 'cp backend/build/reports/application.cdx.json backend-build-sbom.json'
                 
