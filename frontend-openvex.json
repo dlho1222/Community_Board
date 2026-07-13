@@ -5,5 +5,279 @@
   "timestamp": "2026-07-13T00:00:00Z",
   "version": 1,
   "role": "development",
-  "statements": []
+  "statements": [
+    {
+      "vulnerability": {
+        "name": "CVE-2023-52356"
+      },
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "statement": "Tiff image rendering features are not exposed or used in frontend proxying.",
+      "products": [
+        {
+          "@id": "pkg:apk/alpine/tiff@4.7.1-r0?arch=x86_64&distro=alpine-3.23.5"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-4775"
+      },
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "statement": "Tiff image rendering features are not exposed or used in frontend proxying.",
+      "products": [
+        {
+          "@id": "pkg:apk/alpine/tiff@4.7.1-r0?arch=x86_64&distro=alpine-3.23.5"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-8925"
+      },
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "statement": "Curl is only present in the container image and not used for external networking by Nginx.",
+      "products": [
+        {
+          "@id": "pkg:apk/alpine/curl@8.19.0-r0?arch=x86_64&distro=alpine-3.23.5"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-11856"
+      },
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "statement": "Curl is only present in the container image and not used for external networking by Nginx.",
+      "products": [
+        {
+          "@id": "pkg:apk/alpine/curl@8.19.0-r0?arch=x86_64&distro=alpine-3.23.5"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-9079"
+      },
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "statement": "Curl is only present in the container image and not used for external networking by Nginx.",
+      "products": [
+        {
+          "@id": "pkg:apk/alpine/curl@8.19.0-r0?arch=x86_64&distro=alpine-3.23.5"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-10536"
+      },
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "statement": "Curl is only present in the container image and not used for external networking by Nginx.",
+      "products": [
+        {
+          "@id": "pkg:apk/alpine/curl@8.19.0-r0?arch=x86_64&distro=alpine-3.23.5"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-11352"
+      },
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "statement": "Curl is only present in the container image and not used for external networking by Nginx.",
+      "products": [
+        {
+          "@id": "pkg:apk/alpine/curl@8.19.0-r0?arch=x86_64&distro=alpine-3.23.5"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-8927"
+      },
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "statement": "Curl is only present in the container image and not used for external networking by Nginx.",
+      "products": [
+        {
+          "@id": "pkg:apk/alpine/curl@8.19.0-r0?arch=x86_64&distro=alpine-3.23.5"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-11586"
+      },
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "statement": "Curl is only present in the container image and not used for external networking by Nginx.",
+      "products": [
+        {
+          "@id": "pkg:apk/alpine/curl@8.19.0-r0?arch=x86_64&distro=alpine-3.23.5"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-8924"
+      },
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "statement": "Curl is only present in the container image and not used for external networking by Nginx.",
+      "products": [
+        {
+          "@id": "pkg:apk/alpine/curl@8.19.0-r0?arch=x86_64&distro=alpine-3.23.5"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-8926"
+      },
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "statement": "Curl is only present in the container image and not used for external networking by Nginx.",
+      "products": [
+        {
+          "@id": "pkg:apk/alpine/curl@8.19.0-r0?arch=x86_64&distro=alpine-3.23.5"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-11564"
+      },
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "statement": "Curl is only present in the container image and not used for external networking by Nginx.",
+      "products": [
+        {
+          "@id": "pkg:apk/alpine/curl@8.19.0-r0?arch=x86_64&distro=alpine-3.23.5"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-9546"
+      },
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "statement": "Curl is only present in the container image and not used for external networking by Nginx.",
+      "products": [
+        {
+          "@id": "pkg:apk/alpine/curl@8.19.0-r0?arch=x86_64&distro=alpine-3.23.5"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-12064"
+      },
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "statement": "Curl is only present in the container image and not used for external networking by Nginx.",
+      "products": [
+        {
+          "@id": "pkg:apk/alpine/curl@8.19.0-r0?arch=x86_64&distro=alpine-3.23.5"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-5773"
+      },
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "statement": "Curl is only present in the container image and not used for external networking by Nginx.",
+      "products": [
+        {
+          "@id": "pkg:apk/alpine/curl@8.19.0-r0?arch=x86_64&distro=alpine-3.23.5"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-8286"
+      },
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "statement": "Curl is only present in the container image and not used for external networking by Nginx.",
+      "products": [
+        {
+          "@id": "pkg:apk/alpine/curl@8.19.0-r0?arch=x86_64&distro=alpine-3.23.5"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-9547"
+      },
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "statement": "Curl is only present in the container image and not used for external networking by Nginx.",
+      "products": [
+        {
+          "@id": "pkg:apk/alpine/curl@8.19.0-r0?arch=x86_64&distro=alpine-3.23.5"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-9080"
+      },
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "statement": "Curl is only present in the container image and not used for external networking by Nginx.",
+      "products": [
+        {
+          "@id": "pkg:apk/alpine/curl@8.19.0-r0?arch=x86_64&distro=alpine-3.23.5"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-9545"
+      },
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "statement": "Curl is only present in the container image and not used for external networking by Nginx.",
+      "products": [
+        {
+          "@id": "pkg:apk/alpine/curl@8.19.0-r0?arch=x86_64&distro=alpine-3.23.5"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-8932"
+      },
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "statement": "Curl is only present in the container image and not used for external networking by Nginx.",
+      "products": [
+        {
+          "@id": "pkg:apk/alpine/curl@8.19.0-r0?arch=x86_64&distro=alpine-3.23.5"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-6276"
+      },
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "statement": "Curl is only present in the container image and not used for external networking by Nginx.",
+      "products": [
+        {
+          "@id": "pkg:apk/alpine/curl@8.19.0-r0?arch=x86_64&distro=alpine-3.23.5"
+        }
+      ]
+    }
+  ]
 }
