@@ -1,0 +1,9 @@
+[0002] ERROR failed to catalog: errors occurred attempting to resolve 'C:/Users/FINS/IdeaProjects/Community_board/backend/build/reports/application.cdx.json':
+  - snap: snap file "C:\\Users\\FINS\\IdeaProjects\\Community_board\\backend\\build\\reports\\application.cdx.json" does not exist
+  - docker: docker not available: failed to connect to Docker daemon. Ensure Docker is running and accessible
+  - podman: podman not available: no host address
+  - containerd: containerd not available: no grpc connection or services is available: unavailable
+  - oci-registry: unable to parse registry reference="C:/Users/FINS/IdeaProjects/Community_board/backend/build/reports/application.cdx.json": could not parse reference: C:/Users/FINS/IdeaProjects/Community_board/backend/build/reports/application.cdx.json
+  - oci-model: failed to parse reference "C:/Users/FINS/IdeaProjects/Community_board/backend/build/reports/application.cdx.json": could not parse reference: C:/Users/FINS/IdeaProjects/Community_board/backend/build/reports/application.cdx.json
+  - snap: strconv.Atoi: parsing "\\Users\\FINS\\IdeaProjects\\Community_board\\backend\\build\\reports\\application.cdx.json": invalid syntax
+  - additionally, the following providers failed with file does not exist: docker-archive, oci-archive, oci-dir, singularity, local-file, local-directory
