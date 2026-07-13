@@ -138,8 +138,8 @@ pipeline {
                 '''
                 
                 // 3. Grant 라이선스 컴플라이언스 스캔 (위반 로그 저장)
-                sh 'export PATH="/var/jenkins_home/bin:$PATH" && grant check backend-image-sbom.json -c .grant.yaml > backend-image-license-blocked.txt'
-                sh 'export PATH="/var/jenkins_home/bin:$PATH" && grant check frontend-image-sbom.json -c .grant.yaml > frontend-image-license-blocked.txt'
+                sh 'export PATH="/var/jenkins_home/bin:$PATH" && grant check backend-image-sbom.json -c .grant-image.yaml > backend-image-license-blocked.txt'
+                sh 'export PATH="/var/jenkins_home/bin:$PATH" && grant check frontend-image-sbom.json -c .grant-image.yaml > frontend-image-license-blocked.txt'
                 
                 echo '✅ [바이너리 Docker 이미지 검증 성공] - 치명적인 취약점 및 라이선스 위반이 없습니다.'
             }

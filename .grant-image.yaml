@@ -1,0 +1,51 @@
+# Grant License Compliance Configuration for Container Images
+# This policy is permissive for OS-level system packages (allowing GPL/LGPL) 
+# while still enforcing baseline compliance.
+
+format: table
+quiet: false
+verbose: false
+
+# 1. Require all packages to have a license and recognize only known/standard licenses
+require-license: true
+require-known-license: true
+
+# 2. Package patterns to ignore
+ignore-packages:
+  - "internal/*"
+
+# 3. Whitelist allowing permissive and standard OS copyleft licenses.
+# Linking or running OS tools (like bash, tar, glibc) does not trigger source code disclosure obligations.
+allow:
+  - "MIT"
+  - "Apache-2.0"
+  - "BSD-2-Clause"
+  - "BSD-3-Clause"
+  - "ISC"
+  - "Unlicense"
+  - "CC0-1.0"
+  - "EPL-1.0"
+  - "EPL-2.0"
+  - "MPL-2.0"
+  - "CDDL-1.0"
+  - "CDDL-1.1"
+  - "Public Domain"
+  # OS package standard licenses
+  - "GPL-2.0"
+  - "GPL-3.0"
+  - "LGPL-2.0"
+  - "LGPL-2.1"
+  - "LGPL-3.0"
+  - "OpenSSL"
+  - "zlib"
+  - "Zlib"
+  - "FTL"
+  - "Artistic-1.0-cl8"
+  - "Artistic-2.0"
+  - "Python-2.0"
+  - "PostgreSQL"
+  - "Unicode-DFS-2016"
+  - "BSL-1.0"
+  - "libpng-2.0"
+  - "curl"
+  - "libtiff"
