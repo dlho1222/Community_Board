@@ -45,7 +45,7 @@ pipeline {
                     
                     # Verify versions
                     export PATH="/var/jenkins_home/bin:$PATH"
-                    vexctl --version
+                    vexctl version
                     grant --version
                 '''
             }
