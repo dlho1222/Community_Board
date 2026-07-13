@@ -60,9 +60,27 @@ pipeline {
                 sh 'syft dir:./backend -o cyclonedx-json@1.6=backend-build-sbom.json'
                 sh 'syft dir:./frontend -o cyclonedx-json@1.6=frontend-build-sbom.json'
                 
-                // 2. Grype 보안 취약점 스캔 (OpenVEX 필터 적용 및 차단 로그 저장)
-                sh 'export PATH="/var/jenkins_home/bin:$PATH" && grype backend-build-sbom.json --vex backend-openvex.json --by-cve --min-severity high --fail-on high > backend-source-cve-blocked.txt'
-                sh 'export PATH="/var/jenkins_home/bin:$PATH" && grype frontend-build-sbom.json --vex frontend-openvex.json --by-cve --min-severity high --fail-on high > frontend-source-cve-blocked.txt'
+                // 2. Grype 보안 취약점 스캔 (OpenVEX 필터 적용, High/Critical만 필터링하여 차단 로그 저장)
+                sh '''
+                    export PATH="/var/jenkins_home/bin:$PATH"
+                    set +e
+                    grype backend-build-sbom.json --vex backend-openvex.json --by-cve --fail-on high > backend-source-all.txt
+                    EXIT_CODE=$?
+                    set -e
+                    grep -E "High|Critical|SEVERITY" backend-source-all.txt > backend-source-cve-blocked.txt || true
+                    rm -f backend-source-all.txt
+                    exit $EXIT_CODE
+                '''
+                sh '''
+                    export PATH="/var/jenkins_home/bin:$PATH"
+                    set +e
+                    grype frontend-build-sbom.json --vex frontend-openvex.json --by-cve --fail-on high > frontend-source-all.txt
+                    EXIT_CODE=$?
+                    set -e
+                    grep -E "High|Critical|SEVERITY" frontend-source-all.txt > frontend-source-cve-blocked.txt || true
+                    rm -f frontend-source-all.txt
+                    exit $EXIT_CODE
+                '''
                 
                 // 3. Grant 라이선스 컴플라이언스 스캔 (위반 로그 저장)
                 sh 'export PATH="/var/jenkins_home/bin:$PATH" && grant check backend-build-sbom.json -c .grant.yaml > backend-source-license-blocked.txt'
@@ -97,9 +115,27 @@ pipeline {
                 sh "syft ${DOCKER_HUB_ID}/backend-app:latest -o cyclonedx-json@1.6=backend-image-sbom.json"
                 sh "syft ${DOCKER_HUB_ID}/frontend-app:latest -o cyclonedx-json@1.6=frontend-image-sbom.json"
                 
-                // 2. Grype 보안 취약점 스캔 (OpenVEX 필터 적용 및 차단 로그 저장)
-                sh 'export PATH="/var/jenkins_home/bin:$PATH" && grype backend-image-sbom.json --vex backend-openvex.json --by-cve --min-severity high --fail-on high > backend-image-cve-blocked.txt'
-                sh 'export PATH="/var/jenkins_home/bin:$PATH" && grype frontend-image-sbom.json --vex frontend-openvex.json --by-cve --min-severity high --fail-on high > frontend-image-cve-blocked.txt'
+                // 2. Grype 보안 취약점 스캔 (OpenVEX 필터 적용, High/Critical만 필터링하여 차단 로그 저장)
+                sh '''
+                    export PATH="/var/jenkins_home/bin:$PATH"
+                    set +e
+                    grype backend-image-sbom.json --vex backend-openvex.json --by-cve --fail-on high > backend-image-all.txt
+                    EXIT_CODE=$?
+                    set -e
+                    grep -E "High|Critical|SEVERITY" backend-image-all.txt > backend-image-cve-blocked.txt || true
+                    rm -f backend-image-all.txt
+                    exit $EXIT_CODE
+                '''
+                sh '''
+                    export PATH="/var/jenkins_home/bin:$PATH"
+                    set +e
+                    grype frontend-image-sbom.json --vex frontend-openvex.json --by-cve --fail-on high > frontend-image-all.txt
+                    EXIT_CODE=$?
+                    set -e
+                    grep -E "High|Critical|SEVERITY" frontend-image-all.txt > frontend-image-cve-blocked.txt || true
+                    rm -f frontend-image-all.txt
+                    exit $EXIT_CODE
+                '''
                 
                 // 3. Grant 라이선스 컴플라이언스 스캔 (위반 로그 저장)
                 sh 'export PATH="/var/jenkins_home/bin:$PATH" && grant check backend-image-sbom.json -c .grant.yaml > backend-image-license-blocked.txt'
