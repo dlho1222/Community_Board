@@ -1,0 +1,24 @@
+# Local Environment Variables (MySQL passwords, etc.)
+.env
+*.env
+
+# Pipeline Generated Security Reports & SBOMs
+*-sbom.json
+*-openvex.json
+*-cyclonedx-vex.json
+*-blocked.txt
+
+# Local scan test logs/results
+local-*.txt
+local-*.json
+
+# IntelliJ / IDE / Build artifacts
+.idea/
+*.iml
+out/
+build/
+bin/
+
+# OS-specific files
+.DS_Store
+Thumbs.db

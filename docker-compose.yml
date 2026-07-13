@@ -7,12 +7,12 @@ services:
     restart: always
     environment:
       # 1. root 비밀번호 설정
-      MYSQL_ROOT_PASSWORD: password1234!
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       # 2. 사용할 DB 이름 생성
-      MYSQL_DATABASE: Community_Board_DB
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
       # 3. 사용할 일반 사용자 생성 (properties와 일치)
-      MYSQL_USER: board_admin
-      MYSQL_PASSWORD: password1234!
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "3306:3306"
     volumes:
@@ -28,9 +28,9 @@ services:
       - "8080:8080"
     environment:
       # 중요: IP 주소(192.168...) 대신 도커 서비스 이름인 'db'를 사용해야 합니다.
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/Community_Board_DB?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-      SPRING_DATASOURCE_USERNAME: board_admin
-      SPRING_DATASOURCE_PASSWORD: password1234!
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
       FILE_UPLOAD_DIR: /app/uploads
     # 파일 업로드를 사용하신다면 아래 볼륨 설정도 유용합니다.
     volumes:

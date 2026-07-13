@@ -262,9 +262,11 @@ pipeline {
             steps {
                 script {
                     try {
+                        sh "cp /var/jenkins_home/secrets/board.env .env || true"
                         sh "export DOCKER_API_VERSION=1.44 && docker-compose down || true"
                         sh "export DOCKER_API_VERSION=1.44 && docker-compose up -d"
                     } catch (Exception e) {
+                        sh "cp /var/jenkins_home/secrets/board.env .env || true"
                         sh "export DOCKER_API_VERSION=1.44 && docker compose down || true"
                         sh "export DOCKER_API_VERSION=1.44 && docker compose up -d"
                     }
