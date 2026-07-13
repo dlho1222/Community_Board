@@ -415,6 +415,19 @@
           "@id": "pkg:deb/ubuntu/gpgv@2.2.19-3ubuntu2.4?arch=amd64&distro=ubuntu-20.04&upstream=gnupg2"
         }
       ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-40972"
+      },
+      "status": "not_affected",
+      "justification": "component_not_present",
+      "statement": "Spring Boot DevTools remote features are not enabled in this application.",
+      "products": [
+        {
+          "@id": "pkg:maven/org.springframework.boot/spring-boot-devtools@3.3.11"
+        }
+      ]
     }
   ]
 }
