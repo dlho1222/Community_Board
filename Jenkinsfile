@@ -86,9 +86,30 @@ pipeline {
                     exit $EXIT_CODE
                 '''
                 
-                // 3. Grant 라이선스 컴플라이언스 스캔 (위반 로그 저장)
-                sh 'export PATH="/var/jenkins_home/bin:$PATH" && grant check backend-build-sbom.json -c .grant.yaml > backend-source-license-blocked.txt'
-                sh 'export PATH="/var/jenkins_home/bin:$PATH" && grant check frontend-build-sbom.json -c .grant.yaml > frontend-source-license-blocked.txt'
+                // 3. 라이선스 허용 여부 체크 (백엔드 / 프론트엔드)
+                sh '''
+                    export PATH=/var/jenkins_home/bin:$PATH
+                    set +e
+                    grant check backend-build-sbom.json -c .grant.yaml -v
+                    BACKEND_EXIT=$?
+                    set -e
+                    if [ $BACKEND_EXIT -ne 0 ]; then
+                        echo "❌ 백엔드 라이선스 검증 실패! 위의 출력 로그에서 위반 내역을 확인하세요."
+                        exit $BACKEND_EXIT
+                    fi
+                '''
+                
+                sh '''
+                    export PATH=/var/jenkins_home/bin:$PATH
+                    set +e
+                    grant check frontend-build-sbom.json -c .grant.yaml -v
+                    FRONTEND_EXIT=$?
+                    set -e
+                    if [ $FRONTEND_EXIT -ne 0 ]; then
+                        echo "❌ 프론트엔드 라이선스 검증 실패! 위의 출력 로그에서 위반 내역을 확인하세요."
+                        exit $FRONTEND_EXIT
+                    fi
+                '''
                 
                 echo '✅ [소스코드 빌드 검증 성공] - 치명적인 취약점 및 라이선스 위반이 없습니다.'
             }

@@ -3,7 +3,7 @@
 
 format: table
 quiet: false
-verbose: false
+verbose: true
 
 # 1. Require all packages to have a license and recognize only known/standard licenses
 require-license: true
