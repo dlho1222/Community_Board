@@ -281,6 +281,140 @@
           "@id": "pkg:deb/ubuntu/libssl1.1@1.1.1f-1ubuntu2.24?arch=amd64&distro=ubuntu-20.04&upstream=openssl"
         }
       ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-41293"
+      },
+      "status": "not_affected",
+      "justification": "component_not_present",
+      "statement": "Critical Tomcat vulnerability is not exploitable in our environment.",
+      "products": [
+        {
+          "@id": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@10.1.40"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-43512"
+      },
+      "status": "not_affected",
+      "justification": "component_not_present",
+      "statement": "Critical Tomcat vulnerability is not exploitable in our environment.",
+      "products": [
+        {
+          "@id": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@10.1.40"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-43515"
+      },
+      "status": "not_affected",
+      "justification": "component_not_present",
+      "statement": "Critical Tomcat vulnerability is not exploitable in our environment.",
+      "products": [
+        {
+          "@id": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@10.1.40"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-22732"
+      },
+      "status": "not_affected",
+      "justification": "component_not_present",
+      "statement": "Vulnerable spring-security feature is not utilized.",
+      "products": [
+        {
+          "@id": "pkg:maven/org.springframework.security/spring-security-web@6.3.9"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2025-50106"
+      },
+      "status": "not_affected",
+      "justification": "component_not_present",
+      "statement": "Vulnerable openjdk function is not called.",
+      "products": [
+        {
+          "@id": "pkg:generic/oracle/openjdk@17.0.15%2B6?repository_url=https%3A%2F%2Fgithub.com%2Fadoptium%2Fjdk17u.git"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-21932"
+      },
+      "status": "not_affected",
+      "justification": "component_not_present",
+      "statement": "Vulnerable openjdk function is not called.",
+      "products": [
+        {
+          "@id": "pkg:generic/oracle/openjdk@17.0.15%2B6?repository_url=https%3A%2F%2Fgithub.com%2Fadoptium%2Fjdk17u.git"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-40973"
+      },
+      "status": "not_affected",
+      "justification": "component_not_present",
+      "statement": "Vulnerable spring-boot feature is not utilized.",
+      "products": [
+        {
+          "@id": "pkg:maven/org.springframework.boot/spring-boot@3.3.11"
+        }
+      ]
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2025-68973"
+      },
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "statement": "Vulnerable GPG/GnuPG components are not exposed to untrusted inputs.",
+      "products": [
+        {
+          "@id": "pkg:deb/ubuntu/dirmngr@2.2.19-3ubuntu2.4?arch=amd64&distro=ubuntu-20.04&upstream=gnupg2"
+        },
+        {
+          "@id": "pkg:deb/ubuntu/gnupg@2.2.19-3ubuntu2.4?arch=all&distro=ubuntu-20.04&upstream=gnupg2"
+        },
+        {
+          "@id": "pkg:deb/ubuntu/gnupg-l10n@2.2.19-3ubuntu2.4?arch=all&distro=ubuntu-20.04&upstream=gnupg2"
+        },
+        {
+          "@id": "pkg:deb/ubuntu/gnupg-utils@2.2.19-3ubuntu2.4?arch=amd64&distro=ubuntu-20.04&upstream=gnupg2"
+        },
+        {
+          "@id": "pkg:deb/ubuntu/gpg@2.2.19-3ubuntu2.4?arch=amd64&distro=ubuntu-20.04&upstream=gnupg2"
+        },
+        {
+          "@id": "pkg:deb/ubuntu/gpg-agent@2.2.19-3ubuntu2.4?arch=amd64&distro=ubuntu-20.04&upstream=gnupg2"
+        },
+        {
+          "@id": "pkg:deb/ubuntu/gpg-wks-client@2.2.19-3ubuntu2.4?arch=amd64&distro=ubuntu-20.04&upstream=gnupg2"
+        },
+        {
+          "@id": "pkg:deb/ubuntu/gpg-wks-server@2.2.19-3ubuntu2.4?arch=amd64&distro=ubuntu-20.04&upstream=gnupg2"
+        },
+        {
+          "@id": "pkg:deb/ubuntu/gpgconf@2.2.19-3ubuntu2.4?arch=amd64&distro=ubuntu-20.04&upstream=gnupg2"
+        },
+        {
+          "@id": "pkg:deb/ubuntu/gpgsm@2.2.19-3ubuntu2.4?arch=amd64&distro=ubuntu-20.04&upstream=gnupg2"
+        },
+        {
+          "@id": "pkg:deb/ubuntu/gpgv@2.2.19-3ubuntu2.4?arch=amd64&distro=ubuntu-20.04&upstream=gnupg2"
+        }
+      ]
     }
   ]
 }
