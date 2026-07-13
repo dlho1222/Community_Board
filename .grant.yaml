@@ -1,0 +1,25 @@
+# Grant License Compliance Configuration
+# This policy enforces license compliance at build time.
+
+format: table
+quiet: false
+verbose: false
+
+# 1. Require all packages to have a license (Block unspecified licenses)
+require-license: true
+require-known-license: false
+
+# 2. Package patterns to ignore from license checking (internal packages)
+ignore-packages:
+  - "internal/*"
+
+# 3. Explicitly deny GPL/AGPL (Copyleft) licenses to prevent source code disclosure obligations
+rules:
+  - name: "deny-gpl"
+    pattern: "*gpl*"
+    mode: "deny"
+    reason: "GPL licenses require source code disclosure and are forbidden for commercial distribution."
+  - name: "deny-agpl"
+    pattern: "*agpl*"
+    mode: "deny"
+    reason: "AGPL licenses require source code disclosure and are forbidden for commercial distribution."
