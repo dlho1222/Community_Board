@@ -33,7 +33,7 @@ pipeline {
                     # Install vexctl if not present
                     if [ ! -f /var/jenkins_home/bin/vexctl ]; then
                         echo "Installing vexctl..."
-                        curl -sSfL https://github.com/openvex/vexctl/releases/latest/download/vexctl_linux_amd64 -o /var/jenkins_home/bin/vexctl
+                        curl -sSfL https://github.com/openvex/vexctl/releases/latest/download/vexctl-linux-amd64 -o /var/jenkins_home/bin/vexctl
                         chmod +x /var/jenkins_home/bin/vexctl
                     fi
                     
