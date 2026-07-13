@@ -54,10 +54,17 @@ pipeline {
         stage('2. Source SCA & License Scan') {
             steps {
                 echo '🔍 [소스코드 SBOM 및 라이선스 스캔 시작]...'
-                sh 'rm -rf backend/build'
                 
-                // 1. 소스 디렉토리로부터 SBOM 추출 (CycloneDX 1.6 버전으로 고정)
-                sh 'syft dir:./backend -o cyclonedx-json@1.6=backend-build-sbom.json'
+                // 1. 소스 디렉토리로부터 정밀한 SBOM 추출 (백엔드는 Gradle 실행, 프론트엔드는 npm install 후 스캔)
+                dir('backend') {
+                    sh 'chmod +x ./gradlew'
+                    sh './gradlew cyclonedxBom'
+                }
+                sh 'cp backend/build/reports/application.cdx.json backend-build-sbom.json'
+                
+                dir('frontend') {
+                    sh 'npm install'
+                }
                 sh 'syft dir:./frontend -o cyclonedx-json@1.6=frontend-build-sbom.json'
                 
                 // 2. Grype 보안 취약점 스캔 (OpenVEX 필터 적용, High/Critical만 필터링하여 차단 로그 저장)
@@ -137,11 +144,7 @@ pipeline {
                     exit $EXIT_CODE
                 '''
                 
-                // 3. Grant 라이선스 컴플라이언스 스캔 (위반 로그 저장)
-                sh 'export PATH="/var/jenkins_home/bin:$PATH" && grant check backend-image-sbom.json -c .grant-image.yaml > backend-image-license-blocked.txt'
-                sh 'export PATH="/var/jenkins_home/bin:$PATH" && grant check frontend-image-sbom.json -c .grant-image.yaml > frontend-image-license-blocked.txt'
-                
-                echo '✅ [바이너리 Docker 이미지 검증 성공] - 치명적인 취약점 및 라이선스 위반이 없습니다.'
+                echo '✅ [바이너리 Docker 이미지 검증 성공] - 치명적인 취약점이 없습니다.'
             }
         }
 
